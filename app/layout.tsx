@@ -5,11 +5,51 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "RamenHire — Jobs at Bootstrapped, Profitable Startups",
+  metadataBase: new URL("https://ramenhire.com"),
+  title: {
+    default: "RamenHire — Jobs at Bootstrapped, Profitable Startups",
+    template: "%s | RamenHire",
+  },
   description:
-    "Find jobs at bootstrapped, profitable startups. No VC pressure. No layoff roulette. Just calm, sustainable companies hiring great people.",
+    "Find remote jobs at bootstrapped, self-funded, profitable startups. No VC pressure, no layoff roulette. Browse verified bootstrapped companies hiring engineers, designers, marketers, and more.",
+  keywords: [
+    "bootstrapped startup jobs",
+    "remote jobs profitable startups",
+    "self-funded startup careers",
+    "indie startup jobs",
+    "no VC startup jobs",
+    "calm company jobs",
+    "remote work bootstrapped",
+    "bootstrapped companies hiring",
+  ],
+  authors: [{ name: "RamenHire" }],
+  creator: "RamenHire",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true },
+  },
+  openGraph: {
+    type: "website",
+    siteName: "RamenHire",
+    title: "RamenHire — Jobs at Bootstrapped, Profitable Startups",
+    description:
+      "Find remote jobs at bootstrapped, self-funded, profitable startups. No VC pressure. No layoff roulette. Just calm companies hiring great people.",
+    url: "https://ramenhire.com",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "RamenHire — Jobs at Bootstrapped, Profitable Startups",
+    description:
+      "Find remote jobs at bootstrapped, self-funded, profitable startups. No VC pressure. No layoff roulette. Just calm companies hiring great people.",
+    creator: "@ramenhire",
+  },
   icons: {
     icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍜</text></svg>",
+  },
+  alternates: {
+    canonical: "https://ramenhire.com",
   },
 };
 
@@ -18,9 +58,102 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: "RamenHire",
+      url: "https://ramenhire.com",
+      description: "Job board exclusively for bootstrapped, self-funded, profitable startups.",
+      potentialAction: {
+        "@type": "SearchAction",
+        target: "https://ramenhire.com#jobs",
+        "query-input": "required name=search_term_string",
+      },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "JobPosting",
+      title: "Growth Marketing Manager",
+      description:
+        "Payhip is a profitable, bootstrapped startup powering 150,000+ entrepreneurs to sell digital products online. Looking for a growth marketer to identify high-impact opportunities and drive organic and paid acquisition.",
+      hiringOrganization: { "@type": "Organization", name: "Payhip" },
+      jobLocationType: "TELECOMMUTE",
+      applicantLocationRequirements: { "@type": "Country", name: "Worldwide" },
+      employmentType: "FULL_TIME",
+      baseSalary: {
+        "@type": "MonetaryAmount",
+        currency: "USD",
+        value: { "@type": "QuantitativeValue", minValue: 75000, maxValue: 99000, unitText: "YEAR" },
+      },
+      url: "https://weworkremotely.com/remote-jobs/payhip-growth-marketing-manager",
+      directApply: true,
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "JobPosting",
+      title: "Head of Product",
+      description:
+        "Gruntwork is a profitable, bootstrapped DevOps company with no outside investors. Globally recognized for open source tools like Terragrunt used by thousands of companies from startups to Fortune 500s.",
+      hiringOrganization: { "@type": "Organization", name: "Gruntwork" },
+      jobLocationType: "TELECOMMUTE",
+      applicantLocationRequirements: { "@type": "Country", name: "Worldwide" },
+      employmentType: "FULL_TIME",
+      baseSalary: {
+        "@type": "MonetaryAmount",
+        currency: "USD",
+        value: { "@type": "QuantitativeValue", minValue: 150000, maxValue: 180000, unitText: "YEAR" },
+      },
+      url: "https://jobs.ashbyhq.com/gruntwork/c216e88e-2580-447d-9ea7-665ef00b15ea",
+      directApply: true,
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "JobPosting",
+      title: "Customer Onboarding & Support Specialist",
+      description:
+        "Gymflow is a founder-led, bootstrapped SaaS platform for gym and fitness studio owners. Small, focused team of 11 where your impact is immediate and visible.",
+      hiringOrganization: { "@type": "Organization", name: "Gymflow" },
+      jobLocationType: "TELECOMMUTE",
+      applicantLocationRequirements: { "@type": "Country", name: "South Africa" },
+      employmentType: "FULL_TIME",
+      baseSalary: {
+        "@type": "MonetaryAmount",
+        currency: "USD",
+        value: { "@type": "QuantitativeValue", minValue: 45000, maxValue: 65000, unitText: "YEAR" },
+      },
+      url: "https://weworkremotely.com/remote-jobs/gymflow-customer-onboarding-support-specialist-remote-south-africa",
+      directApply: true,
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "JobPosting",
+      title: "Senior Software Engineer",
+      description:
+        "Aha! is a self-funded, profitable, 100% remote product development company used by 700,000+ builders worldwide. They champion the Bootstrap Movement and have never taken outside funding.",
+      hiringOrganization: { "@type": "Organization", name: "Aha!" },
+      jobLocationType: "TELECOMMUTE",
+      applicantLocationRequirements: { "@type": "Country", name: "Worldwide" },
+      employmentType: "FULL_TIME",
+      baseSalary: {
+        "@type": "MonetaryAmount",
+        currency: "USD",
+        value: { "@type": "QuantitativeValue", minValue: 130000, maxValue: 160000, unitText: "YEAR" },
+      },
+      url: "https://www.aha.io/company/careers/current-openings",
+      directApply: true,
+    },
+  ];
+
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        {children}
+      </body>
     </html>
   );
 }
