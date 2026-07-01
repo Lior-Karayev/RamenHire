@@ -35,16 +35,25 @@ export const metadata: Metadata = {
     siteName: "RamenHire",
     title: "RamenHire — Jobs at Bootstrapped, Profitable Startups",
     description:
-      "Find remote jobs at bootstrapped, self-funded, profitable startups. No VC pressure. No layoff roulette. Just calm companies hiring great people.",
-    url: "https://ramenhire.com",
+      "Find jobs at calm, self-funded companies. No VC pressure, no layoff roulette. Just profitable startups hiring great people.",
+    url: "https://www.ramenhire.com",
     locale: "en_US",
+    images: [
+      {
+        url: "https://www.ramenhire.com/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "RamenHire — Jobs at Bootstrapped, Profitable Startups",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "RamenHire — Jobs at Bootstrapped, Profitable Startups",
     description:
-      "Find remote jobs at bootstrapped, self-funded, profitable startups. No VC pressure. No layoff roulette. Just calm companies hiring great people.",
+      "Find jobs at calm, self-funded companies. No VC pressure, no layoff roulette. Just profitable startups hiring great people.",
     creator: "@ramenhire",
+    images: ["https://www.ramenhire.com/og-image.png"],
   },
   icons: {
     icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍜</text></svg>",
