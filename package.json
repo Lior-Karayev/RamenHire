@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "postbuild": "next-sitemap",
-    "start": "next start"
+    "start": "next start",
+    "screenshot": "node scripts/screenshot.js"
   },
   "dependencies": {
     "next": "^16.2.9",
@@ -21,6 +22,7 @@
     "autoprefixer": "^10.5.2",
     "next-sitemap": "^4.2.3",
     "postcss": "^8.5.16",
+    "puppeteer": "^25.3.0",
     "tailwindcss": "^4.3.2",
     "typescript": "^6.0.3"
   }
