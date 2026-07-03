@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
 
 declare function gtag(command: string, action: string, params?: Record<string, unknown>): void;
 
@@ -116,7 +116,7 @@ export default function Home() {
     setApplyStatus("loading");
     setApplyError("");
 
-    const { error } = await supabase.from("applications").insert({
+    const { error } = await getSupabase().from("applications").insert({
       job_title: selectedJob.title,
       company_name: selectedJob.company,
       applicant_name: applyForm.name,
@@ -143,7 +143,7 @@ export default function Home() {
     setSubStatus("loading");
     setSubError("");
 
-    const { error } = await supabase.from("subscribers").insert({
+    const { error } = await getSupabase().from("subscribers").insert({
       full_name: subForm.name,
       email: subForm.email,
       role_types: subForm.roles.length > 0 ? subForm.roles : null,
