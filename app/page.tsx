@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
+import { supabase } from "@/lib/supabase";
+
 declare function gtag(command: string, action: string, params?: Record<string, unknown>): void;
 
-const POST_JOB_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSeXHCqqYpiSNLKJhe3Cpo4aRjpyTKRwEju4SO9A30eMOzChiA/viewform?usp=publish-editor";
-const EMAIL_SIGNUP_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdr85e8kfqKd8qCdW-kClDYdTx7WMZMl9SrJ-aozi0HYfUsqw/viewform?usp=publish-editor";
+const POST_JOB_URL = "/post-job";
 
 const jobs = [
   {
@@ -14,7 +16,6 @@ const jobs = [
     tags: ["Marketing", "SEO", "PPC"],
     description:
       "Payhip is a profitable, bootstrapped startup powering 150,000+ entrepreneurs to sell digital products online. Looking for a growth marketer to identify high-impact opportunities and drive organic and paid acquisition.",
-    applyUrl: "https://weworkremotely.com/remote-jobs/payhip-growth-marketing-manager",
   },
   {
     title: "Head of Product",
@@ -24,7 +25,6 @@ const jobs = [
     tags: ["Product", "DevOps", "SaaS"],
     description:
       "Gruntwork is a profitable, bootstrapped DevOps company with no outside investors. Globally recognized for open source tools like Terragrunt used by thousands of companies from startups to Fortune 500s.",
-    applyUrl: "https://jobs.ashbyhq.com/gruntwork/c216e88e-2580-447d-9ea7-665ef00b15ea",
   },
   {
     title: "Customer Onboarding & Support Specialist",
@@ -34,7 +34,6 @@ const jobs = [
     tags: ["Customer Support", "SaaS", "Onboarding"],
     description:
       "Gymflow is a founder-led, bootstrapped SaaS platform for gym and fitness studio owners. Small, focused team of 11 where your impact is immediate and visible.",
-    applyUrl: "https://weworkremotely.com/remote-jobs/gymflow-customer-onboarding-support-specialist-remote-south-africa",
   },
   {
     title: "Senior Software Engineer",
@@ -44,7 +43,6 @@ const jobs = [
     tags: ["Engineering", "Ruby", "SaaS"],
     description:
       "Aha! is a self-funded, profitable, 100% remote product development company used by 700,000+ builders worldwide. They champion the Bootstrap Movement and have never taken outside funding.",
-    applyUrl: "https://www.aha.io/company/careers/current-openings",
   },
 ];
 
@@ -66,25 +64,277 @@ const valueProps = [
   },
 ];
 
+const ROLE_OPTIONS = ["Engineering", "Design", "Product", "Marketing", "Support", "Other"];
+
+type Job = typeof jobs[number];
+type ApplyForm = { name: string; email: string; why: string; cv: string };
+type SubForm = { name: string; email: string; roles: string[] };
+type Status = "idle" | "loading" | "success" | "error";
+
+const INPUT_CLS =
+  "w-full px-4 py-2.5 rounded-lg border text-sm outline-none transition-colors";
+const INPUT_STYLE = {
+  borderColor: "#E5E0D8",
+  backgroundColor: "#FFFFFF",
+  color: "#1A1A1A",
+};
+
+function focusOrange(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) {
+  e.currentTarget.style.borderColor = "#C8501A";
+}
+function blurGray(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) {
+  e.currentTarget.style.borderColor = "#E5E0D8";
+}
+
 export default function Home() {
+  // ── Apply modal ──────────────────────────────────────────
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [applyForm, setApplyForm] = useState<ApplyForm>({ name: "", email: "", why: "", cv: "" });
+  const [applyStatus, setApplyStatus] = useState<Status>("idle");
+  const [applyError, setApplyError] = useState("");
+
+  // ── Subscribe form ───────────────────────────────────────
+  const [subForm, setSubForm] = useState<SubForm>({ name: "", email: "", roles: [] });
+  const [subStatus, setSubStatus] = useState<Status>("idle");
+  const [subError, setSubError] = useState("");
+
+  function openApplyModal(job: Job) {
+    setSelectedJob(job);
+    setApplyForm({ name: "", email: "", why: "", cv: "" });
+    setApplyStatus("idle");
+    setApplyError("");
+    gtag("event", "apply_click", { job_title: job.title, company_name: job.company });
+  }
+
+  function closeApplyModal() {
+    setSelectedJob(null);
+  }
+
+  async function submitApplication(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedJob) return;
+    setApplyStatus("loading");
+    setApplyError("");
+
+    const { error } = await supabase.from("applications").insert({
+      job_title: selectedJob.title,
+      company_name: selectedJob.company,
+      applicant_name: applyForm.name,
+      applicant_email: applyForm.email,
+      why_interested: applyForm.why,
+      cv_link: applyForm.cv || null,
+    });
+
+    if (error) {
+      setApplyStatus("error");
+      setApplyError("Something went wrong. Please try again.");
+      return;
+    }
+
+    setApplyStatus("success");
+    gtag("event", "application_submitted", {
+      job_title: selectedJob.title,
+      company_name: selectedJob.company,
+    });
+  }
+
+  async function submitSubscribe(e: React.FormEvent) {
+    e.preventDefault();
+    setSubStatus("loading");
+    setSubError("");
+
+    const { error } = await supabase.from("subscribers").insert({
+      full_name: subForm.name,
+      email: subForm.email,
+      role_types: subForm.roles.length > 0 ? subForm.roles : null,
+    });
+
+    if (error) {
+      setSubStatus("error");
+      setSubError(
+        error.code === "23505"
+          ? "You're already subscribed with this email."
+          : "Something went wrong. Please try again."
+      );
+      return;
+    }
+
+    setSubStatus("success");
+    gtag("event", "subscribe_submitted");
+  }
+
+  function toggleRole(role: string) {
+    setSubForm((prev) => ({
+      ...prev,
+      roles: prev.roles.includes(role)
+        ? prev.roles.filter((r) => r !== role)
+        : [...prev.roles, role],
+    }));
+  }
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#FAF9F7", color: "#1A1A1A" }}>
-      {/* NAVBAR */}
+
+      {/* ── APPLY MODAL ───────────────────────────────────── */}
+      {selectedJob && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backgroundColor: "rgba(26,26,26,0.6)" }}
+          onClick={closeApplyModal}
+        >
+          <div
+            className="w-full max-w-lg rounded-xl border overflow-y-auto relative"
+            style={{
+              backgroundColor: "#FAF9F7",
+              borderColor: "#E5E0D8",
+              maxHeight: "90vh",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-8">
+              <button
+                onClick={closeApplyModal}
+                className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full text-xl leading-none transition-colors"
+                style={{ color: "#6B6560" }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#F0EDE8";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
+                }}
+                aria-label="Close"
+              >
+                ×
+              </button>
+
+              {applyStatus === "success" ? (
+                <div className="py-10 text-center">
+                  <p className="text-4xl mb-4">🍜</p>
+                  <h3 className="text-lg font-semibold mb-2" style={{ color: "#1A1A1A" }}>
+                    Application sent!
+                  </h3>
+                  <p className="text-sm" style={{ color: "#6B6560" }}>
+                    We&apos;ll be in touch soon.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <h2 className="text-xl font-semibold mb-1 pr-8" style={{ color: "#1A1A1A" }}>
+                    Apply for {selectedJob.title}
+                  </h2>
+                  <p className="text-sm mb-6" style={{ color: "#6B6560" }}>
+                    at {selectedJob.company}
+                  </p>
+
+                  <form onSubmit={submitApplication} className="flex flex-col gap-5">
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5" style={{ color: "#1A1A1A" }}>
+                        Full Name <span style={{ color: "#C8501A" }}>*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={applyForm.name}
+                        onChange={(e) => setApplyForm((p) => ({ ...p, name: e.target.value }))}
+                        className={INPUT_CLS}
+                        style={INPUT_STYLE}
+                        onFocus={focusOrange}
+                        onBlur={blurGray}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5" style={{ color: "#1A1A1A" }}>
+                        Email Address <span style={{ color: "#C8501A" }}>*</span>
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        value={applyForm.email}
+                        onChange={(e) => setApplyForm((p) => ({ ...p, email: e.target.value }))}
+                        className={INPUT_CLS}
+                        style={INPUT_STYLE}
+                        onFocus={focusOrange}
+                        onBlur={blurGray}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5" style={{ color: "#1A1A1A" }}>
+                        Why are you interested in this role?{" "}
+                        <span style={{ color: "#C8501A" }}>*</span>
+                      </label>
+                      <textarea
+                        required
+                        rows={4}
+                        value={applyForm.why}
+                        onChange={(e) => setApplyForm((p) => ({ ...p, why: e.target.value }))}
+                        className={`${INPUT_CLS} resize-none`}
+                        style={INPUT_STYLE}
+                        onFocus={focusOrange}
+                        onBlur={blurGray}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5" style={{ color: "#1A1A1A" }}>
+                        Link to CV / Portfolio{" "}
+                        <span className="text-xs font-normal" style={{ color: "#9B9690" }}>
+                          (optional)
+                        </span>
+                      </label>
+                      <input
+                        type="url"
+                        value={applyForm.cv}
+                        onChange={(e) => setApplyForm((p) => ({ ...p, cv: e.target.value }))}
+                        placeholder="https://..."
+                        className={INPUT_CLS}
+                        style={INPUT_STYLE}
+                        onFocus={focusOrange}
+                        onBlur={blurGray}
+                      />
+                    </div>
+
+                    {applyStatus === "error" && (
+                      <p className="text-sm" style={{ color: "#C8501A" }}>
+                        {applyError}
+                      </p>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={applyStatus === "loading"}
+                      className="w-full py-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors"
+                      style={{
+                        backgroundColor: applyStatus === "loading" ? "#D4845A" : "#C8501A",
+                        color: "#FAF9F7",
+                        cursor: applyStatus === "loading" ? "not-allowed" : "pointer",
+                      }}
+                    >
+                      {applyStatus === "loading" && (
+                        <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      )}
+                      {applyStatus === "loading" ? "Sending…" : "Send Application"}
+                    </button>
+                  </form>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── NAVBAR ────────────────────────────────────────── */}
       <nav
-        className="sticky top-0 z-50 border-b"
-        style={{
-          backgroundColor: "#FAF9F7",
-          borderColor: "#E5E0D8",
-        }}
+        className="sticky top-0 z-40 border-b"
+        style={{ backgroundColor: "#FAF9F7", borderColor: "#E5E0D8" }}
       >
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
           <span className="text-lg font-semibold tracking-tight" style={{ color: "#1A1A1A" }}>
             Ramen<span style={{ color: "#C8501A" }}>Hire</span>
           </span>
           <a
-            href={POST_JOB_FORM_URL}
-            target="_blank"
-            rel="noopener noreferrer"
+            href={POST_JOB_URL}
             className="text-sm font-medium px-4 py-2 rounded-lg border transition-colors"
             style={{
               backgroundColor: "#C8501A",
@@ -106,17 +356,14 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* HERO */}
+      {/* ── HERO ──────────────────────────────────────────── */}
       <section className="max-w-5xl mx-auto px-6 pt-24 pb-20">
         <div className="max-w-2xl">
           <div
             className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full border mb-8"
             style={{ color: "#5C7A5C", borderColor: "#5C7A5C", backgroundColor: "#F0F4F0" }}
           >
-            <span
-              className="w-1.5 h-1.5 rounded-full"
-              style={{ backgroundColor: "#5C7A5C" }}
-            />
+            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: "#5C7A5C" }} />
             Bootstrapped companies only
           </div>
           <h1
@@ -128,18 +375,13 @@ export default function Home() {
             Startups
           </h1>
           <p className="text-xl leading-relaxed mb-10" style={{ color: "#6B6560" }}>
-            No VC pressure. No layoff roulette. Just calm, profitable companies
-            hiring great people.
+            No VC pressure. No layoff roulette. Just calm, profitable companies hiring great people.
           </p>
           <div className="flex flex-wrap gap-3">
             <a
               href="#jobs"
               className="inline-flex items-center gap-2 px-5 py-3 rounded-lg border text-sm font-medium transition-colors"
-              style={{
-                backgroundColor: "#1A1A1A",
-                color: "#FAF9F7",
-                borderColor: "#1A1A1A",
-              }}
+              style={{ backgroundColor: "#1A1A1A", color: "#FAF9F7", borderColor: "#1A1A1A" }}
               onMouseEnter={(e) => {
                 (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#333";
               }}
@@ -150,15 +392,9 @@ export default function Home() {
               Browse Jobs
             </a>
             <a
-              href={POST_JOB_FORM_URL}
-              target="_blank"
-              rel="noopener noreferrer"
+              href={POST_JOB_URL}
               className="inline-flex items-center gap-2 px-5 py-3 rounded-lg border text-sm font-medium transition-colors"
-              style={{
-                backgroundColor: "transparent",
-                color: "#1A1A1A",
-                borderColor: "#E5E0D8",
-              }}
+              style={{ backgroundColor: "transparent", color: "#1A1A1A", borderColor: "#E5E0D8" }}
               onMouseEnter={(e) => {
                 (e.currentTarget as HTMLAnchorElement).style.borderColor = "#C8501A";
                 (e.currentTarget as HTMLAnchorElement).style.color = "#C8501A";
@@ -175,25 +411,16 @@ export default function Home() {
         </div>
       </section>
 
-      {/* VALUE PROPS */}
-      <section
-        className="border-y"
-        style={{ borderColor: "#E5E0D8" }}
-      >
+      {/* ── VALUE PROPS ───────────────────────────────────── */}
+      <section className="border-y" style={{ borderColor: "#E5E0D8" }}>
         <div className="max-w-5xl mx-auto px-6 py-16">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
             {valueProps.map((prop) => (
               <div key={prop.title}>
-                <div
-                  className="text-2xl mb-4"
-                  style={{ color: "#C8501A" }}
-                >
+                <div className="text-2xl mb-4" style={{ color: "#C8501A" }}>
                   {prop.icon}
                 </div>
-                <h3
-                  className="text-base font-semibold mb-2"
-                  style={{ color: "#1A1A1A" }}
-                >
+                <h3 className="text-base font-semibold mb-2" style={{ color: "#1A1A1A" }}>
                   {prop.title}
                 </h3>
                 <p className="text-sm leading-relaxed" style={{ color: "#6B6560" }}>
@@ -205,7 +432,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* JOB LISTINGS */}
+      {/* ── JOB LISTINGS ──────────────────────────────────── */}
       <section id="jobs" className="max-w-5xl mx-auto px-6 py-20">
         <div className="flex items-center justify-between mb-10">
           <h2 className="text-2xl font-semibold" style={{ color: "#1A1A1A" }}>
@@ -219,11 +446,8 @@ export default function Home() {
           {jobs.map((job) => (
             <div
               key={`${job.title}-${job.company}`}
-              className="group flex flex-col sm:flex-row sm:items-start justify-between gap-4 p-5 rounded-lg border cursor-pointer transition-all"
-              style={{
-                borderColor: "#E5E0D8",
-                backgroundColor: "#FAF9F7",
-              }}
+              className="group flex flex-col sm:flex-row sm:items-start justify-between gap-4 p-5 rounded-lg border transition-all"
+              style={{ borderColor: "#E5E0D8", backgroundColor: "#FAF9F7" }}
               onMouseEnter={(e) => {
                 (e.currentTarget as HTMLDivElement).style.borderColor = "#C8501A";
                 (e.currentTarget as HTMLDivElement).style.backgroundColor = "#FFF8F5";
@@ -256,7 +480,10 @@ export default function Home() {
                   <span>·</span>
                   <span>{job.salary}</span>
                 </div>
-                <p className="text-sm leading-relaxed mt-0.5" style={{ color: "#6B6560", maxWidth: "580px" }}>
+                <p
+                  className="text-sm leading-relaxed mt-0.5"
+                  style={{ color: "#6B6560", maxWidth: "580px" }}
+                >
                   {job.description}
                 </p>
                 <div className="flex flex-wrap gap-2 mt-1">
@@ -276,95 +503,157 @@ export default function Home() {
                 </div>
               </div>
               <div className="shrink-0">
-                <a
-                  href={job.applyUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
                   className="text-sm font-medium transition-colors"
                   style={{ color: "#C8501A" }}
                   onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLAnchorElement).style.color = "#A8401A";
+                    (e.currentTarget as HTMLButtonElement).style.color = "#A8401A";
                   }}
                   onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLAnchorElement).style.color = "#C8501A";
+                    (e.currentTarget as HTMLButtonElement).style.color = "#C8501A";
                   }}
                   onClick={(e) => {
                     e.stopPropagation();
-                    gtag("event", "apply_click", { job_title: job.title, company_name: job.company });
+                    openApplyModal(job);
                   }}
                 >
-                  Apply Now ↗
-                </a>
+                  Apply Now →
+                </button>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* EMAIL SIGNUP */}
-      <section
-        className="border-y"
-        style={{ borderColor: "#E5E0D8" }}
-      >
+      {/* ── EMAIL SIGNUP ──────────────────────────────────── */}
+      <section className="border-y" style={{ borderColor: "#E5E0D8" }}>
         <div className="max-w-5xl mx-auto px-6 py-20">
-          <div className="max-w-lg mx-auto text-center">
-            <h2 className="text-2xl font-semibold mb-3" style={{ color: "#1A1A1A" }}>
-              Get new jobs in your inbox every week
-            </h2>
-            <p className="text-base mb-8" style={{ color: "#6B6560" }}>
-              No spam, no noise. Just a curated list of new openings at
-              bootstrapped companies, every Monday.
-            </p>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                gtag("event", "subscribe_click");
-                window.open(EMAIL_SIGNUP_FORM_URL, "_blank");
-              }}
-              className="flex flex-col sm:flex-row gap-2.5"
-            >
-              <input
-                type="email"
-                placeholder="you@example.com"
-                required
-                className="flex-1 px-4 py-3 rounded-lg border text-sm outline-none transition-colors"
-                style={{
-                  borderColor: "#E5E0D8",
-                  backgroundColor: "#FFFFFF",
-                  color: "#1A1A1A",
-                }}
-                onFocus={(e) => {
-                  (e.currentTarget as HTMLInputElement).style.borderColor = "#C8501A";
-                }}
-                onBlur={(e) => {
-                  (e.currentTarget as HTMLInputElement).style.borderColor = "#E5E0D8";
-                }}
-              />
-              <button
-                type="submit"
-                className="px-5 py-3 rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
-                style={{
-                  backgroundColor: "#C8501A",
-                  color: "#FAF9F7",
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#A8401A";
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#C8501A";
-                }}
-              >
-                Subscribe
-              </button>
-            </form>
-            <p className="text-xs mt-4" style={{ color: "#6B6560" }}>
-              Unsubscribe anytime. We respect your inbox.
-            </p>
+          <div className="max-w-lg mx-auto">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-semibold mb-3" style={{ color: "#1A1A1A" }}>
+                Get new jobs in your inbox every week
+              </h2>
+              <p className="text-base" style={{ color: "#6B6560" }}>
+                No spam, no noise. Just a curated list of new openings at bootstrapped companies,
+                every Monday.
+              </p>
+            </div>
+
+            {subStatus === "success" ? (
+              <div className="text-center py-8">
+                <p className="text-4xl mb-4">🍜</p>
+                <p className="text-lg font-semibold mb-1" style={{ color: "#1A1A1A" }}>
+                  You&apos;re in!
+                </p>
+                <p className="text-sm" style={{ color: "#6B6560" }}>
+                  We&apos;ll send you the best bootstrapped jobs every week.
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={submitSubscribe} className="flex flex-col gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1.5" style={{ color: "#1A1A1A" }}>
+                    Full Name <span style={{ color: "#C8501A" }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={subForm.name}
+                    onChange={(e) => setSubForm((p) => ({ ...p, name: e.target.value }))}
+                    placeholder="Jane Doe"
+                    className="w-full px-4 py-3 rounded-lg border text-sm outline-none transition-colors"
+                    style={{ borderColor: "#E5E0D8", backgroundColor: "#FFFFFF", color: "#1A1A1A" }}
+                    onFocus={(e) => {
+                      (e.currentTarget as HTMLInputElement).style.borderColor = "#C8501A";
+                    }}
+                    onBlur={(e) => {
+                      (e.currentTarget as HTMLInputElement).style.borderColor = "#E5E0D8";
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1.5" style={{ color: "#1A1A1A" }}>
+                    Email Address <span style={{ color: "#C8501A" }}>*</span>
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={subForm.email}
+                    onChange={(e) => setSubForm((p) => ({ ...p, email: e.target.value }))}
+                    placeholder="you@example.com"
+                    className="w-full px-4 py-3 rounded-lg border text-sm outline-none transition-colors"
+                    style={{ borderColor: "#E5E0D8", backgroundColor: "#FFFFFF", color: "#1A1A1A" }}
+                    onFocus={(e) => {
+                      (e.currentTarget as HTMLInputElement).style.borderColor = "#C8501A";
+                    }}
+                    onBlur={(e) => {
+                      (e.currentTarget as HTMLInputElement).style.borderColor = "#E5E0D8";
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <p className="text-sm font-medium mb-2" style={{ color: "#1A1A1A" }}>
+                    What roles are you looking for?{" "}
+                    <span className="text-xs font-normal" style={{ color: "#9B9690" }}>
+                      (optional)
+                    </span>
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {ROLE_OPTIONS.map((role) => {
+                      const active = subForm.roles.includes(role);
+                      return (
+                        <button
+                          key={role}
+                          type="button"
+                          onClick={() => toggleRole(role)}
+                          className="text-xs px-3 py-1.5 rounded-full border transition-colors"
+                          style={{
+                            borderColor: active ? "#C8501A" : "#E5E0D8",
+                            backgroundColor: active ? "#FFF8F5" : "transparent",
+                            color: active ? "#C8501A" : "#6B6560",
+                          }}
+                        >
+                          {role}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {subStatus === "error" && (
+                  <p className="text-sm" style={{ color: "#C8501A" }}>
+                    {subError}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={subStatus === "loading"}
+                  className="w-full py-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors"
+                  style={{
+                    backgroundColor: subStatus === "loading" ? "#D4845A" : "#C8501A",
+                    color: "#FAF9F7",
+                    cursor: subStatus === "loading" ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {subStatus === "loading" && (
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  )}
+                  {subStatus === "loading" ? "Subscribing…" : "Subscribe"}
+                </button>
+
+                <p className="text-xs text-center" style={{ color: "#6B6560" }}>
+                  Unsubscribe anytime. We respect your inbox.
+                </p>
+              </form>
+            )}
           </div>
         </div>
       </section>
 
-      {/* FOOTER */}
+      {/* ── FOOTER ────────────────────────────────────────── */}
       <footer className="max-w-5xl mx-auto px-6 py-10">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <span className="text-sm font-medium" style={{ color: "#1A1A1A" }}>
@@ -374,9 +663,7 @@ export default function Home() {
             © 2026 RamenHire — Jobs at companies that don&apos;t need your hustle.
           </p>
           <a
-            href={POST_JOB_FORM_URL}
-            target="_blank"
-            rel="noopener noreferrer"
+            href={POST_JOB_URL}
             className="text-sm font-medium transition-colors"
             style={{ color: "#6B6560" }}
             onMouseEnter={(e) => {
@@ -385,6 +672,7 @@ export default function Home() {
             onMouseLeave={(e) => {
               (e.currentTarget as HTMLAnchorElement).style.color = "#6B6560";
             }}
+            onClick={() => gtag("event", "post_job_click")}
           >
             Post a Job
           </a>
