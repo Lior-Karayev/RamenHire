@@ -18,6 +18,9 @@ CREATE TABLE applications (
 
 ALTER TABLE applications ENABLE ROW LEVEL SECURITY;
 
+GRANT INSERT                   ON public.applications TO anon;
+GRANT SELECT, UPDATE, DELETE   ON public.applications TO authenticated;
+
 CREATE POLICY "anon_insert_applications"  ON applications FOR INSERT TO anon            WITH CHECK (true);
 CREATE POLICY "auth_select_applications"  ON applications FOR SELECT TO authenticated   USING (true);
 CREATE POLICY "auth_update_applications"  ON applications FOR UPDATE TO authenticated   USING (true);
@@ -46,6 +49,9 @@ CREATE TABLE job_post_requests (
 
 ALTER TABLE job_post_requests ENABLE ROW LEVEL SECURITY;
 
+GRANT INSERT                   ON public.job_post_requests TO anon;
+GRANT SELECT, UPDATE, DELETE   ON public.job_post_requests TO authenticated;
+
 CREATE POLICY "anon_insert_job_posts"  ON job_post_requests FOR INSERT TO anon            WITH CHECK (true);
 CREATE POLICY "auth_select_job_posts"  ON job_post_requests FOR SELECT TO authenticated   USING (true);
 CREATE POLICY "auth_update_job_posts"  ON job_post_requests FOR UPDATE TO authenticated   USING (true);
@@ -62,6 +68,9 @@ CREATE TABLE subscribers (
 );
 
 ALTER TABLE subscribers ENABLE ROW LEVEL SECURITY;
+
+GRANT INSERT                   ON public.subscribers TO anon;
+GRANT SELECT, UPDATE, DELETE   ON public.subscribers TO authenticated;
 
 CREATE POLICY "anon_insert_subscribers"  ON subscribers FOR INSERT TO anon            WITH CHECK (true);
 CREATE POLICY "auth_select_subscribers"  ON subscribers FOR SELECT TO authenticated   USING (true);
