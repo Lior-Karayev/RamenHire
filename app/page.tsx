@@ -1,5 +1,7 @@
 "use client";
 
+declare function gtag(command: string, action: string, params?: Record<string, unknown>): void;
+
 const POST_JOB_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSeXHCqqYpiSNLKJhe3Cpo4aRjpyTKRwEju4SO9A30eMOzChiA/viewform?usp=publish-editor";
 const EMAIL_SIGNUP_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdr85e8kfqKd8qCdW-kClDYdTx7WMZMl9SrJ-aozi0HYfUsqw/viewform?usp=publish-editor";
 
@@ -97,6 +99,7 @@ export default function Home() {
               (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#C8501A";
               (e.currentTarget as HTMLAnchorElement).style.borderColor = "#C8501A";
             }}
+            onClick={() => gtag("event", "post_job_click")}
           >
             Post a Job
           </a>
@@ -164,6 +167,7 @@ export default function Home() {
                 (e.currentTarget as HTMLAnchorElement).style.borderColor = "#E5E0D8";
                 (e.currentTarget as HTMLAnchorElement).style.color = "#1A1A1A";
               }}
+              onClick={() => gtag("event", "post_job_click")}
             >
               Post a Job — $99
             </a>
@@ -284,7 +288,10 @@ export default function Home() {
                   onMouseLeave={(e) => {
                     (e.currentTarget as HTMLAnchorElement).style.color = "#C8501A";
                   }}
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    gtag("event", "apply_click", { job_title: job.title, company_name: job.company });
+                  }}
                 >
                   Apply Now ↗
                 </a>
@@ -311,6 +318,7 @@ export default function Home() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
+                gtag("event", "subscribe_click");
                 window.open(EMAIL_SIGNUP_FORM_URL, "_blank");
               }}
               className="flex flex-col sm:flex-row gap-2.5"
