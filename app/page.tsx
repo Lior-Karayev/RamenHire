@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { getSupabase } from "@/lib/supabase";
 
 declare function gtag(command: string, action: string, params?: Record<string, unknown>): void;
@@ -92,6 +92,11 @@ export default function Home() {
   const [applyForm, setApplyForm] = useState<ApplyForm>({ name: "", email: "", why: "", cv: "" });
   const [applyStatus, setApplyStatus] = useState<Status>("idle");
   const [applyError, setApplyError] = useState("");
+  const [cvFile, setCvFile] = useState<File | null>(null);
+  const [cvFileError, setCvFileError] = useState("");
+  const [cvUploadStage, setCvUploadStage] = useState<"idle" | "uploading" | "done" | "error">("idle");
+  const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ── Subscribe form ───────────────────────────────────────
   const [subForm, setSubForm] = useState<SubForm>({ name: "", email: "", roles: [] });
@@ -103,6 +108,11 @@ export default function Home() {
     setApplyForm({ name: "", email: "", why: "", cv: "" });
     setApplyStatus("idle");
     setApplyError("");
+    setCvFile(null);
+    setCvFileError("");
+    setCvUploadStage("idle");
+    setIsDragOver(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
     gtag("event", "apply_click", { job_title: job.title, company_name: job.company });
   }
 
@@ -116,6 +126,37 @@ export default function Home() {
     setApplyStatus("loading");
     setApplyError("");
 
+    let storagePath: string | null = null;
+    let storageFileName: string | null = null;
+
+    if (cvFile) {
+      setCvUploadStage("uploading");
+      const timestamp = Date.now();
+      const safeName = cvFile.name.replace(/\s+/g, "_");
+      const path = `${slugify(selectedJob.title)}/${slugify(selectedJob.company)}/${timestamp}_${safeName}`;
+
+      const { error: uploadError } = await getSupabase()
+        .storage
+        .from("cvs")
+        .upload(path, cvFile, { cacheControl: "3600", upsert: false });
+
+      if (uploadError) {
+        setCvUploadStage("error");
+        setApplyStatus("error");
+        const msg = uploadError.message?.toLowerCase() ?? "";
+        setApplyError(
+          msg.includes("not found") || msg.includes("unavailable") || msg.includes("bucket")
+            ? "File upload unavailable. Please paste a link instead."
+            : "Upload failed. Please try again or paste a link to your CV instead."
+        );
+        return;
+      }
+
+      storagePath = path;
+      storageFileName = cvFile.name;
+      setCvUploadStage("done");
+    }
+
     const { error } = await getSupabase().from("applications").insert({
       job_title: selectedJob.title,
       company_name: selectedJob.company,
@@ -123,6 +164,8 @@ export default function Home() {
       applicant_email: applyForm.email,
       why_interested: applyForm.why,
       cv_link: applyForm.cv || null,
+      cv_storage_path: storagePath,
+      cv_file_name: storageFileName,
     });
 
     if (error) {
@@ -172,6 +215,61 @@ export default function Home() {
     }));
   }
 
+  // ── File upload helpers ──────────────────────────────────
+  const ALLOWED_MIME = [
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ];
+  const ALLOWED_EXT = [".pdf", ".doc", ".docx"];
+  const MAX_BYTES = 5 * 1024 * 1024;
+
+  function slugify(str: string) {
+    return str.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  }
+
+  function formatBytes(bytes: number) {
+    return bytes < 1024 * 1024
+      ? `${(bytes / 1024).toFixed(0)} KB`
+      : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  function validateFile(file: File): string {
+    const ext = "." + (file.name.split(".").pop()?.toLowerCase() ?? "");
+    if (!ALLOWED_MIME.includes(file.type) && !ALLOWED_EXT.includes(ext))
+      return "Only PDF or Word documents are accepted.";
+    if (file.size > MAX_BYTES)
+      return "File must be under 5MB.";
+    return "";
+  }
+
+  function pickFile(file: File) {
+    const err = validateFile(file);
+    if (err) { setCvFileError(err); return; }
+    setCvFile(file);
+    setCvFileError("");
+    setCvUploadStage("idle");
+  }
+
+  function handleFileInput(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) pickFile(file);
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) pickFile(file);
+  }
+
+  function removeFile() {
+    setCvFile(null);
+    setCvFileError("");
+    setCvUploadStage("idle");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#FAF9F7", color: "#1A1A1A" }}>
 
@@ -214,7 +312,7 @@ export default function Home() {
                     Application sent!
                   </h3>
                   <p className="text-sm" style={{ color: "#6B6560" }}>
-                    We&apos;ll be in touch soon.
+                    We&apos;ll review your CV and be in touch soon.
                   </p>
                 </div>
               ) : (
@@ -277,12 +375,108 @@ export default function Home() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium mb-1.5" style={{ color: "#1A1A1A" }}>
-                        Link to CV / Portfolio{" "}
+                      <label className="block text-sm font-medium mb-2" style={{ color: "#1A1A1A" }}>
+                        CV / Resume{" "}
                         <span className="text-xs font-normal" style={{ color: "#9B9690" }}>
                           (optional)
                         </span>
                       </label>
+
+                      {/* Hidden file input */}
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        style={{ display: "none" }}
+                        onChange={handleFileInput}
+                      />
+
+                      {!cvFile ? (
+                        /* Drop zone */
+                        <div
+                          onDrop={handleDrop}
+                          onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+                          onDragEnter={(e) => { e.preventDefault(); setIsDragOver(true); }}
+                          onDragLeave={() => setIsDragOver(false)}
+                          onClick={() => fileInputRef.current?.click()}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => e.key === "Enter" && fileInputRef.current?.click()}
+                          className="rounded-lg text-center cursor-pointer transition-colors"
+                          style={{
+                            border: "2px dashed #C8501A",
+                            backgroundColor: isDragOver ? "#FFF0EA" : "#FAF9F7",
+                            padding: "24px 16px",
+                          }}
+                        >
+                          <p className="text-sm font-medium mb-1" style={{ color: "#1A1A1A" }}>
+                            Drop your file here or{" "}
+                            <span style={{ color: "#C8501A" }}>browse</span>
+                          </p>
+                          <p className="text-xs" style={{ color: "#9B9690" }}>
+                            PDF or Word document, max 5MB
+                          </p>
+                        </div>
+                      ) : (
+                        /* File selected */
+                        <div
+                          className="rounded-lg"
+                          style={{
+                            border: `2px solid ${cvUploadStage === "error" ? "#E53E3E" : "#C8501A"}`,
+                            backgroundColor: "#FAF9F7",
+                            padding: "12px 16px",
+                          }}
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span className="text-base shrink-0" style={{ color: cvUploadStage === "done" ? "#5C7A5C" : "#C8501A" }}>
+                                {cvUploadStage === "done" ? "✓" : "📄"}
+                              </span>
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium truncate" style={{ color: "#1A1A1A" }}>
+                                  {cvFile.name}
+                                </p>
+                                <p className="text-xs" style={{ color: "#9B9690" }}>
+                                  {formatBytes(cvFile.size)}
+                                </p>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={removeFile}
+                              className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full text-base leading-none transition-colors"
+                              style={{ color: "#6B6560" }}
+                              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#F0EDE8"; }}
+                              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent"; }}
+                              aria-label="Remove file"
+                            >
+                              ×
+                            </button>
+                          </div>
+                          {cvUploadStage === "uploading" && (
+                            <div
+                              className="mt-2 rounded-full overflow-hidden"
+                              style={{ height: "3px", backgroundColor: "#E5E0D8" }}
+                            >
+                              <div
+                                className="h-full rounded-full animate-pulse"
+                                style={{ width: "65%", backgroundColor: "#C8501A" }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {cvFileError && (
+                        <p className="text-xs mt-1.5" style={{ color: "#C8501A" }}>
+                          {cvFileError}
+                        </p>
+                      )}
+
+                      {/* Link fallback */}
+                      <p className="text-xs mt-3 mb-1.5" style={{ color: "#9B9690" }}>
+                        Or paste a link to your CV or portfolio
+                      </p>
                       <input
                         type="url"
                         value={applyForm.cv}
@@ -314,7 +508,11 @@ export default function Home() {
                       {applyStatus === "loading" && (
                         <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                       )}
-                      {applyStatus === "loading" ? "Sending…" : "Send Application"}
+                      {applyStatus === "loading"
+                        ? cvUploadStage === "uploading"
+                          ? "Uploading CV…"
+                          : "Sending application…"
+                        : "Send Application"}
                     </button>
                   </form>
                 </>
