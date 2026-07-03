@@ -136,7 +136,8 @@ export default function Home() {
       const path = `${slugify(selectedJob.title)}/${slugify(selectedJob.company)}/${timestamp}_${safeName}`;
 
       console.log("Supabase URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
-      console.log("Anon key exists:", !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+      console.log("Anon key length:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.length);
+      console.log("Anon key prefix:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.substring(0, 30));
 
       const { error: uploadError } = await supabase
         .storage
