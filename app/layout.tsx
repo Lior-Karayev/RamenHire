@@ -103,6 +103,8 @@ export default function RootLayout({
       },
       url: "https://weworkremotely.com/remote-jobs/payhip-growth-marketing-manager",
       directApply: true,
+      datePosted: "2026-07-03",
+      validThrough: "2026-10-01",
     },
     {
       "@context": "https://schema.org",
@@ -121,6 +123,8 @@ export default function RootLayout({
       },
       url: "https://jobs.ashbyhq.com/gruntwork/c216e88e-2580-447d-9ea7-665ef00b15ea",
       directApply: true,
+      datePosted: "2026-07-03",
+      validThrough: "2026-10-01",
     },
     {
       "@context": "https://schema.org",
@@ -139,6 +143,8 @@ export default function RootLayout({
       },
       url: "https://weworkremotely.com/remote-jobs/gymflow-customer-onboarding-support-specialist-remote-south-africa",
       directApply: true,
+      datePosted: "2026-07-03",
+      validThrough: "2026-10-01",
     },
     {
       "@context": "https://schema.org",
@@ -157,6 +163,8 @@ export default function RootLayout({
       },
       url: "https://www.aha.io/company/careers/current-openings",
       directApply: true,
+      datePosted: "2026-07-03",
+      validThrough: "2026-10-01",
     },
   ];
 
