@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { getSupabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 
 declare function gtag(command: string, action: string, params?: Record<string, unknown>): void;
 
@@ -135,7 +135,10 @@ export default function Home() {
       const safeName = cvFile.name.replace(/\s+/g, "_");
       const path = `${slugify(selectedJob.title)}/${slugify(selectedJob.company)}/${timestamp}_${safeName}`;
 
-      const { error: uploadError } = await getSupabase()
+      console.log("Supabase URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
+      console.log("Anon key exists:", !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+
+      const { error: uploadError } = await supabase
         .storage
         .from("cvs")
         .upload(path, cvFile, { cacheControl: "3600", upsert: false });
@@ -157,7 +160,7 @@ export default function Home() {
       setCvUploadStage("done");
     }
 
-    const { error } = await getSupabase().from("applications").insert({
+    const { error } = await supabase.from("applications").insert({
       job_title: selectedJob.title,
       company_name: selectedJob.company,
       applicant_name: applyForm.name,
@@ -186,7 +189,7 @@ export default function Home() {
     setSubStatus("loading");
     setSubError("");
 
-    const { error } = await getSupabase().from("subscribers").insert({
+    const { error } = await supabase.from("subscribers").insert({
       full_name: subForm.name,
       email: subForm.email,
       role_types: subForm.roles.length > 0 ? subForm.roles : null,

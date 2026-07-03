@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { getSupabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 
 declare function gtag(command: string, action: string, params?: Record<string, unknown>): void;
 
@@ -70,7 +70,7 @@ export default function PostJobPage() {
     setStatus("loading");
     setError("");
 
-    const { error: supaError } = await getSupabase().from("job_post_requests").insert({
+    const { error: supaError } = await supabase.from("job_post_requests").insert({
       contact_name: form.contact_name,
       contact_email: form.contact_email,
       company_name: form.company_name,
