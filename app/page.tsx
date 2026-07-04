@@ -132,8 +132,8 @@ export default function Home() {
     if (cvFile) {
       setCvUploadStage("uploading");
       const timestamp = Date.now();
-      const safeName = cvFile.name.replace(/\s+/g, "_");
-      const path = `${slugify(selectedJob.title)}/${slugify(selectedJob.company)}/${timestamp}_${safeName}`;
+      const ext = (cvFile.name.split(".").pop() ?? "pdf").toLowerCase();
+      const path = `${slugify(selectedJob.title)}/${slugify(selectedJob.company)}/${timestamp}.${ext}`;
 
       const { error: uploadError } = await supabase
         .storage
