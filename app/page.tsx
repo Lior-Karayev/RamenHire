@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 
 declare function gtag(command: string, action: string, params?: Record<string, unknown>): void;
@@ -103,6 +103,41 @@ export default function Home() {
   const [subStatus, setSubStatus] = useState<Status>("idle");
   const [subError, setSubError] = useState("");
 
+  // ── Launch week popup ────────────────────────────────────
+  const [popupMounted, setPopupMounted] = useState(false);
+  const [popupVisible, setPopupVisible] = useState(false);
+  const jobsSectionRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (window.innerWidth < 640) return;
+    if (sessionStorage.getItem("ramenhire_popup_dismissed") === "true") return;
+    const section = jobsSectionRef.current;
+    if (!section) return;
+    let triggered = false;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (triggered || !entries[0].isIntersecting) return;
+        triggered = true;
+        observer.disconnect();
+        setTimeout(() => {
+          setPopupMounted(true);
+          requestAnimationFrame(() =>
+            requestAnimationFrame(() => setPopupVisible(true))
+          );
+        }, 1000);
+      },
+      { threshold: 0.3 }
+    );
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, []);
+
+  function dismissPopup() {
+    setPopupVisible(false);
+    sessionStorage.setItem("ramenhire_popup_dismissed", "true");
+    setTimeout(() => setPopupMounted(false), 200);
+  }
+
   function openApplyModal(job: Job) {
     setSelectedJob(job);
     setApplyForm({ name: "", email: "", why: "", cv: "" });
@@ -179,6 +214,22 @@ export default function Home() {
       job_title: selectedJob.title,
       company_name: selectedJob.company,
     });
+
+    fetch("/api/notify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "application",
+        applicant_name: applyForm.name,
+        applicant_email: applyForm.email,
+        job_title: selectedJob.title,
+        company_name: selectedJob.company,
+        why_interested: applyForm.why,
+        cv_link: applyForm.cv || null,
+        cv_file_name: storageFileName,
+        created_at: new Date().toISOString(),
+      }),
+    }).catch((err) => console.error("Admin notification failed:", err));
   }
 
   async function submitSubscribe(e: React.FormEvent) {
@@ -204,6 +255,18 @@ export default function Home() {
 
     setSubStatus("success");
     gtag("event", "subscribe_submitted");
+
+    fetch("/api/notify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "subscriber",
+        full_name: subForm.name,
+        email: subForm.email,
+        role_types: subForm.roles,
+        created_at: new Date().toISOString(),
+      }),
+    }).catch((err) => console.error("Admin notification failed:", err));
   }
 
   function toggleRole(role: string) {
@@ -272,6 +335,90 @@ export default function Home() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#FAF9F7", color: "#1A1A1A" }}>
+
+      {/* ── LAUNCH WEEK POPUP ────────────────────────────── */}
+      {popupMounted && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{
+            backgroundColor: popupVisible ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0)",
+            transition: "background-color 0.2s ease",
+          }}
+          onClick={dismissPopup}
+        >
+          <div
+            className="w-full max-w-[480px] rounded-xl border shadow-2xl"
+            style={{
+              backgroundColor: "#FAF9F7",
+              borderColor: "#E5E0D8",
+              opacity: popupVisible ? 1 : 0,
+              transform: popupVisible ? "scale(1)" : "scale(0.95)",
+              transition: "opacity 0.2s ease, transform 0.2s ease",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="relative p-8">
+              <button
+                onClick={dismissPopup}
+                className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full text-xl leading-none transition-colors"
+                style={{ color: "#6B6560" }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#F0EDE8"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent"; }}
+                aria-label="Close"
+              >
+                ×
+              </button>
+
+              <h2 className="text-2xl font-bold mb-3 pr-8" style={{ color: "#1A1A1A" }}>
+                Post your job free during early access 🍜
+              </h2>
+
+              <p className="text-sm leading-relaxed mb-6" style={{ color: "#6B6B6B" }}>
+                RamenHire is growing fast — all job posts are completely free while we
+                build our community of bootstrapped job seekers. No credit card. No
+                commitment.
+              </p>
+
+              <div
+                className="flex items-center gap-8 mb-6 pb-6"
+                style={{ borderBottom: "1px solid #E5E0D8" }}
+              >
+                {[
+                  { value: "22+", label: "job seekers" },
+                  { value: "6", label: "countries" },
+                  { value: "100%", label: "bootstrapped" },
+                ].map((stat) => (
+                  <div key={stat.label} className="text-center">
+                    <div className="text-lg font-bold" style={{ color: "#1A1A1A" }}>{stat.value}</div>
+                    <div className="text-xs" style={{ color: "#6B6560" }}>{stat.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              <a
+                href="/post-job"
+                className="block w-full text-center py-3 rounded-lg text-sm font-medium mb-3 transition-colors"
+                style={{ backgroundColor: "#C8501A", color: "#FAF9F7" }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#A8401A"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#C8501A"; }}
+                onClick={() => gtag("event", "launch_popup_cta_click")}
+              >
+                Post a Job — It&apos;s Free →
+              </a>
+
+              <button
+                onClick={dismissPopup}
+                className="block w-full text-center text-xs transition-colors"
+                style={{ color: "#9B9690" }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#6B6560"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#9B9690"; }}
+              >
+                Maybe later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── APPLY MODAL ───────────────────────────────────── */}
       {selectedJob && (
@@ -631,7 +778,7 @@ export default function Home() {
       </section>
 
       {/* ── JOB LISTINGS ──────────────────────────────────── */}
-      <section id="jobs" className="max-w-5xl mx-auto px-6 py-20">
+      <section id="jobs" ref={jobsSectionRef} className="max-w-5xl mx-auto px-6 py-20">
         <div className="flex items-center justify-between mb-10">
           <h2 className="text-2xl font-semibold" style={{ color: "#1A1A1A" }}>
             Latest Openings

@@ -94,6 +94,26 @@ export default function PostJobPage() {
 
     setStatus("success");
     gtag("event", "post_job_submitted");
+
+    fetch("/api/notify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "job_post",
+        company_name: form.company_name,
+        company_website: form.company_website || null,
+        contact_name: form.contact_name,
+        contact_email: form.contact_email,
+        job_title: form.job_title,
+        job_type: form.job_type,
+        location: form.location,
+        salary_range: form.salary_range,
+        is_bootstrapped: form.is_bootstrapped === "yes",
+        revenue_range: form.revenue_range || null,
+        job_description: form.job_description,
+        created_at: new Date().toISOString(),
+      }),
+    }).catch((err) => console.error("Admin notification failed:", err));
   }
 
   return (
