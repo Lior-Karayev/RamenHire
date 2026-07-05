@@ -717,12 +717,12 @@ export default function HomeClient({ jobs, totalCount }: Props) {
             className="text-5xl font-semibold leading-[1.1] tracking-tight mb-6"
             style={{ color: "#1A1A1A" }}
           >
-            Jobs at Bootstrapped,{" "}
+            Remote Jobs at Bootstrapped,{" "}
             <span style={{ color: "#C8501A" }}>Profitable</span>{" "}
             Startups
           </h1>
           <p className="text-xl leading-relaxed mb-10" style={{ color: "#6B6560" }}>
-            No VC pressure. No layoff roulette. Just calm, profitable companies hiring great people.
+            No VC pressure. No layoff roulette. Just calm, profitable bootstrapped startups hiring great people for the long run.
           </p>
           <div className="flex flex-wrap gap-3">
             <a

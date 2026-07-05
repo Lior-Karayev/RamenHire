@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   metadataBase: new URL("https://ramenhire.com"),
   title: {
-    default: "RamenHire — Jobs at Bootstrapped, Profitable Startups",
+    default: "Remote Jobs at Bootstrapped, Profitable Startups | RamenHire",
     template: "%s | RamenHire",
   },
   description:
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "RamenHire",
-    title: "RamenHire — Jobs at Bootstrapped, Profitable Startups",
+    title: "Remote Jobs at Bootstrapped, Profitable Startups | RamenHire",
     description:
       "Find jobs at calm, self-funded companies. No VC pressure, no layoff roulette. Just profitable startups hiring great people.",
     url: "https://www.ramenhire.com",
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "RamenHire — Jobs at Bootstrapped, Profitable Startups",
+    title: "Remote Jobs at Bootstrapped, Profitable Startups | RamenHire",
     description:
       "Find jobs at calm, self-funded companies. No VC pressure, no layoff roulette. Just profitable startups hiring great people.",
     creator: "@ramenhire",
