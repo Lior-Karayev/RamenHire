@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     template: "%s | RamenHire",
   },
   description:
-    "Find remote jobs at bootstrapped, self-funded, profitable startups. No VC pressure, no layoff roulette. Browse verified bootstrapped companies hiring engineers, designers, marketers, and more.",
+    "RamenHire — Find remote jobs at bootstrapped, profitable startups. No VC pressure, no layoff roulette. Browse jobs at self-funded companies hiring engineers, designers, marketers, and more.",
   keywords: [
     "bootstrapped startup jobs",
     "remote jobs profitable startups",
