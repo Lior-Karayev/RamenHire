@@ -44,6 +44,69 @@ const jobs = [
     description:
       "Aha! is a self-funded, profitable, 100% remote product development company used by 700,000+ builders worldwide. They champion the Bootstrap Movement and have never taken outside funding.",
   },
+  {
+    title: "Technical Customer Success Manager",
+    company: "Plausible Analytics",
+    salary: "Negotiable",
+    location: "Remote · Worldwide",
+    tags: ["Customer Success", "Analytics", "SaaS"],
+    description:
+      "Plausible Analytics is a privacy-first, open-source Google Analytics alternative. Fully bootstrapped and profitable with a small remote team. Looking for a technical customer success manager to help customers get the most out of the product. You'll work directly with the founders in a small, high-impact team.",
+  },
+  {
+    title: "Founding Customer Success Manager",
+    company: "Wrenly",
+    salary: "$16,000 – $26,000 + commission",
+    location: "Remote · Brazil only",
+    tags: ["Customer Success", "HR Tech", "AI", "SaaS"],
+    description:
+      "Wrenly is a bootstrapped, profitable HR and people-analytics SaaS. They collect performance and engagement data where teams already work (Slack, MS Teams) and their AI turns it into plans managers actually act on. First CSM hire — you'll own onboarding, support, QBRs, renewals and expansion. Requires Brazil timezone and 100+ hours of real hands-on AI agent/automation experience.",
+  },
+  {
+    title: "Full-Stack Engineer (Multiple Roles)",
+    company: "Relevant Healthcare",
+    salary: "Not listed",
+    location: "Remote · Worldwide",
+    tags: ["Engineering", "Ruby on Rails", "TypeScript", "React", "GraphQL", "Healthcare"],
+    description:
+      "Relevant builds a data platform that helps safety-net healthcare providers deliver better care using data from electronic health records. Customers are non-profit Community Health Centers. Small team of ~25, modern stack (Rails, TypeScript, React, GraphQL, d3), healthy approach to both tech debt and work/life balance. Genuinely good people working on meaningful problems.",
+  },
+  {
+    title: "Full-Stack Product Engineer",
+    company: "Featurebase",
+    salary: "Competitive",
+    location: "Remote · Worldwide",
+    tags: ["Engineering", "Next.js", "TypeScript", "Node.js", "MongoDB", "SaaS"],
+    description:
+      "Featurebase is a modern customer support and product feedback platform powering thousands of teams including Lovable, Raycast, and n8n. Looking for a full-stack product engineer to own and ship core product features end-to-end. Stack: Next.js + TypeScript frontend, Node.js backend, MongoDB, Redis. Small team, high autonomy, ship meaningful work.",
+  },
+  {
+    title: "Senior Full-Stack Engineer",
+    company: "CO-Ver",
+    salary: "$150,000 – $175,000",
+    location: "Remote · US only",
+    tags: ["Engineering", "SaaS", "Full-Stack"],
+    description:
+      "CO-Ver is a self-funded, intentionally small SaaS company. Looking for a senior full-stack engineer to join a lean, high-impact team. Strong salary for the right candidate who values autonomy and working without bureaucracy.",
+  },
+  {
+    title: "Multiple Engineering & Specialist Roles",
+    company: "SerpApi",
+    salary: "$150,000 – $180,000",
+    location: "Remote · Worldwide (Austin TX preferred)",
+    tags: ["Engineering", "Python", "Ruby", "JavaScript", "PHP", "Rust", "Go", "Developer Advocate"],
+    description:
+      "SerpApi is the leading API to scrape and parse search engine results, providing 100+ APIs for Google, Google Maps, Bing, Baidu, and more. Hiring across multiple roles including Junior to Senior Fullstack Engineers, Customer Success Engineers, Senior Content Specialists, SEO Specialists, and Developer Advocate positions in Python, Ruby, PHP, JS, Rust, Kotlin, Swift, and Go.",
+  },
+  {
+    title: "Multiple Roles (Sales, Support, Marketing)",
+    company: "Close CRM",
+    salary: "$75,000 – $155,000 (varies by role)",
+    location: "Remote · Worldwide",
+    tags: ["Sales", "Customer Success", "Marketing", "SaaS", "CRM"],
+    description:
+      "Close builds a CRM that helps sales teams spend more time selling and less time on data entry. Bootstrapped and profitable since 2013 with ~110 employees working asynchronously across the globe. Known for 4-week paid sabbatical every 5 years and annual international offsites. Prioritizes longevity over growth-at-all-costs.",
+  },
 ];
 
 const valueProps = [
@@ -87,6 +150,25 @@ function blurGray(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) {
 }
 
 export default function Home() {
+  // ── Pagination ───────────────────────────────────────────
+  const JOBS_PER_PAGE = 6;
+  const [currentPage, setCurrentPage] = useState(1);
+  const [jobsVisible, setJobsVisible] = useState(true);
+  const totalPages = Math.ceil(jobs.length / JOBS_PER_PAGE);
+  const pageStart = (currentPage - 1) * JOBS_PER_PAGE;
+  const pageEnd = Math.min(pageStart + JOBS_PER_PAGE, jobs.length);
+  const pagedJobs = jobs.slice(pageStart, pageEnd);
+
+  function changePage(page: number) {
+    if (page === currentPage || page < 1 || page > totalPages) return;
+    setJobsVisible(false);
+    setTimeout(() => {
+      setCurrentPage(page);
+      setJobsVisible(true);
+      jobsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 200);
+  }
+
   // ── Apply modal ──────────────────────────────────────────
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [applyForm, setApplyForm] = useState<ApplyForm>({ name: "", email: "", why: "", cv: "" });
@@ -384,8 +466,8 @@ export default function Home() {
                 style={{ borderBottom: "1px solid #E5E0D8" }}
               >
                 {[
+                  { value: `${jobs.length}`, label: "open jobs" },
                   { value: "22+", label: "job seekers" },
-                  { value: "6", label: "countries" },
                   { value: "100%", label: "bootstrapped" },
                 ].map((stat) => (
                   <div key={stat.label} className="text-center">
@@ -738,7 +820,7 @@ export default function Home() {
             </a>
             <a
               href={POST_JOB_URL}
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-lg border text-sm font-medium transition-colors"
+              className="inline-flex flex-col items-center px-5 py-2.5 rounded-lg border text-sm font-medium transition-colors leading-tight"
               style={{ backgroundColor: "transparent", color: "#1A1A1A", borderColor: "#E5E0D8" }}
               onMouseEnter={(e) => {
                 (e.currentTarget as HTMLAnchorElement).style.borderColor = "#C8501A";
@@ -750,7 +832,10 @@ export default function Home() {
               }}
               onClick={() => gtag("event", "post_job_click")}
             >
-              Post a Job — $99
+              <span>Post a Job — Free 🍜</span>
+              <span className="text-xs font-normal" style={{ color: "#9CA3AF", textDecoration: "line-through" }}>
+                $99
+              </span>
             </a>
           </div>
         </div>
@@ -787,8 +872,16 @@ export default function Home() {
             {jobs.length} jobs
           </span>
         </div>
-        <div className="flex flex-col gap-3">
-          {jobs.map((job) => (
+
+        {/* Job cards with fade transition */}
+        <div
+          className="flex flex-col gap-3"
+          style={{
+            opacity: jobsVisible ? 1 : 0,
+            transition: "opacity 0.2s ease",
+          }}
+        >
+          {pagedJobs.map((job) => (
             <div
               key={`${job.title}-${job.company}`}
               className="group flex flex-col sm:flex-row sm:items-start justify-between gap-4 p-5 rounded-lg border transition-all"
@@ -868,6 +961,102 @@ export default function Home() {
             </div>
           ))}
         </div>
+
+        {/* ── PAGINATION CONTROLS ───────────────────────────── */}
+        {totalPages > 1 && (
+          <div
+            className="mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+          >
+            {/* Left: showing counter */}
+            <span className="text-sm text-center sm:text-left" style={{ color: "#6B6560" }}>
+              Showing {pageStart + 1}–{pageEnd} of {jobs.length} jobs
+            </span>
+
+            {/* Center: page buttons */}
+            <div className="flex items-center justify-center gap-1">
+              {/* Previous */}
+              <button
+                onClick={() => changePage(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="h-8 px-3 rounded-lg border text-sm transition-colors"
+                style={{
+                  borderColor: currentPage === 1 ? "#E5E0D8" : "#E5E0D8",
+                  backgroundColor: "transparent",
+                  color: currentPage === 1 ? "#C5BFB9" : "#6B6560",
+                  cursor: currentPage === 1 ? "not-allowed" : "pointer",
+                }}
+                onMouseEnter={(e) => {
+                  if (currentPage !== 1)
+                    (e.currentTarget as HTMLButtonElement).style.borderColor = "#C8501A";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = "#E5E0D8";
+                }}
+              >
+                ← Prev
+              </button>
+
+              {/* Page numbers */}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => changePage(page)}
+                  className="h-8 w-8 rounded-lg border text-sm font-medium transition-colors"
+                  style={{
+                    borderColor: page === currentPage ? "#C8501A" : "#E5E0D8",
+                    backgroundColor: page === currentPage ? "#C8501A" : "transparent",
+                    color: page === currentPage ? "#FAF9F7" : "#6B6560",
+                    cursor: page === currentPage ? "default" : "pointer",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (page !== currentPage) {
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = "#C8501A";
+                      (e.currentTarget as HTMLButtonElement).style.color = "#C8501A";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (page !== currentPage) {
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = "#E5E0D8";
+                      (e.currentTarget as HTMLButtonElement).style.color = "#6B6560";
+                    }
+                  }}
+                >
+                  {page}
+                </button>
+              ))}
+
+              {/* Next */}
+              <button
+                onClick={() => changePage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="h-8 px-3 rounded-lg border text-sm transition-colors"
+                style={{
+                  borderColor: "#E5E0D8",
+                  backgroundColor: "transparent",
+                  color: currentPage === totalPages ? "#C5BFB9" : "#6B6560",
+                  cursor: currentPage === totalPages ? "not-allowed" : "pointer",
+                }}
+                onMouseEnter={(e) => {
+                  if (currentPage !== totalPages)
+                    (e.currentTarget as HTMLButtonElement).style.borderColor = "#C8501A";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = "#E5E0D8";
+                }}
+              >
+                Next →
+              </button>
+            </div>
+
+            {/* Right: spacer to balance layout on desktop */}
+            <span
+              className="hidden sm:block text-sm"
+              style={{ color: "#6B6560", minWidth: "120px", textAlign: "right" }}
+            >
+              {jobs.length} jobs found
+            </span>
+          </div>
+        )}
       </section>
 
       {/* ── EMAIL SIGNUP ──────────────────────────────────── */}

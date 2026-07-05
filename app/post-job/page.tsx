@@ -5,6 +5,14 @@ import { supabase } from "@/lib/supabase";
 
 declare function gtag(command: string, action: string, params?: Record<string, unknown>): void;
 
+const JOB_TAGS = [
+  "Engineering", "Design", "Product", "Marketing", "Sales",
+  "Customer Success", "Operations", "Finance", "Legal", "HR",
+  "DevOps", "Data", "Security", "Mobile", "Frontend", "Backend",
+  "Fullstack", "Python", "Ruby", "JavaScript", "TypeScript",
+  "React", "Node.js", "Go", "Rust", "Other",
+];
+
 type FormData = {
   contact_name: string;
   contact_email: string;
@@ -56,8 +64,15 @@ function blurGray(e: FocusEl)   { e.currentTarget.style.borderColor = "#E5E0D8";
 
 export default function PostJobPage() {
   const [form, setForm] = useState<FormData>(INITIAL);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState("");
+
+  function toggleTag(tag: string) {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
+  }
 
   function field(key: keyof FormData) {
     return (
@@ -84,6 +99,7 @@ export default function PostJobPage() {
       job_description: form.job_description,
       company_description: form.company_description,
       application_link: form.application_link,
+      tags: selectedTags.length > 0 ? selectedTags : null,
     });
 
     if (supaError) {
@@ -181,8 +197,9 @@ export default function PostJobPage() {
                 Post a Job
               </h1>
               <p className="text-base" style={{ color: "#6B6560" }}>
-                Reach candidates who want to work at profitable, bootstrapped companies.
-                $99 per listing.
+                Reach candidates who want to work at profitable, bootstrapped companies.{" "}
+                <s style={{ color: "#9CA3AF" }}>$99</s>{" "}
+                <strong style={{ color: "#22C55E" }}>Free during early access 🍜</strong>
               </p>
             </div>
 
@@ -366,6 +383,46 @@ export default function PostJobPage() {
                 </div>
 
                 <div>
+                  <label className="block text-sm font-medium mb-1" style={{ color: "#1A1A1A" }}>
+                    Job Tags{" "}
+                    <span className="text-xs font-normal" style={{ color: "#9B9690" }}>
+                      (optional — select up to 5)
+                    </span>
+                  </label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {JOB_TAGS.map((tag) => {
+                      const active = selectedTags.includes(tag);
+                      const maxed = selectedTags.length >= 5 && !active;
+                      return (
+                        <button
+                          key={tag}
+                          type="button"
+                          disabled={maxed}
+                          onClick={() => toggleTag(tag)}
+                          className="text-xs px-3 py-1.5 rounded-full border transition-colors"
+                          style={{
+                            borderColor: active ? "#C8501A" : "#E5E0D8",
+                            backgroundColor: active ? "#C8501A" : "transparent",
+                            color: active ? "#FAF9F7" : maxed ? "#C5BFB9" : "#6B6560",
+                            cursor: maxed ? "not-allowed" : "pointer",
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!active && !maxed)
+                              (e.currentTarget as HTMLButtonElement).style.borderColor = "#C8501A";
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!active && !maxed)
+                              (e.currentTarget as HTMLButtonElement).style.borderColor = "#E5E0D8";
+                          }}
+                        >
+                          {tag}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div>
                   <label className="block text-sm font-medium mb-1.5" style={{ color: "#1A1A1A" }}>
                     Job Type <span style={{ color: "#C8501A" }}>*</span>
                   </label>
@@ -463,17 +520,24 @@ export default function PostJobPage() {
               <button
                 type="submit"
                 disabled={status === "loading"}
-                className="w-full py-3.5 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors"
+                className="w-full py-3.5 rounded-lg text-sm font-medium flex flex-col items-center justify-center gap-0.5 transition-colors"
                 style={{
                   backgroundColor: status === "loading" ? "#D4845A" : "#C8501A",
                   color: "#FAF9F7",
                   cursor: status === "loading" ? "not-allowed" : "pointer",
                 }}
               >
-                {status === "loading" && (
-                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span className="flex items-center gap-2">
+                  {status === "loading" && (
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  )}
+                  {status === "loading" ? "Submitting…" : "Submit Listing — Free 🍜"}
+                </span>
+                {status !== "loading" && (
+                  <span className="text-xs font-normal" style={{ color: "rgba(255,255,255,0.65)", textDecoration: "line-through" }}>
+                    $99 value
+                  </span>
                 )}
-                {status === "loading" ? "Submitting…" : "Submit Listing — $99"}
               </button>
             </form>
           </>
