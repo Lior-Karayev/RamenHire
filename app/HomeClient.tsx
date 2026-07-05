@@ -197,6 +197,7 @@ export default function HomeClient({ jobs, totalCount }: Props) {
     }
 
     const { error } = await supabase.from("applications").insert({
+      job_id: selectedJob.id,
       job_title: selectedJob.title,
       company_name: selectedJob.company,
       applicant_name: applyForm.name,
@@ -231,6 +232,7 @@ export default function HomeClient({ jobs, totalCount }: Props) {
         why_interested: applyForm.why,
         cv_link: applyForm.cv || null,
         cv_file_name: storageFileName,
+        apply_url: selectedJob.apply_url,
         created_at: new Date().toISOString(),
       }),
     }).catch((err) => console.error("Admin notification failed:", err));
@@ -867,22 +869,22 @@ export default function HomeClient({ jobs, totalCount }: Props) {
                     </div>
                   </div>
                   <div className="shrink-0">
-                    <a
-                      href={job.apply_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
                       className="text-sm font-medium transition-colors"
                       style={{ color: "#C8501A" }}
                       onMouseEnter={(e) => {
-                        (e.currentTarget as HTMLAnchorElement).style.color = "#A8401A";
+                        (e.currentTarget as HTMLButtonElement).style.color = "#A8401A";
                       }}
                       onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLAnchorElement).style.color = "#C8501A";
+                        (e.currentTarget as HTMLButtonElement).style.color = "#C8501A";
                       }}
-                      onClick={() => gtag("event", "apply_click", { job_title: job.title, company_name: job.company })}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openApplyModal(job);
+                      }}
                     >
                       Apply Now →
-                    </a>
+                    </button>
                   </div>
                 </div>
               ))}

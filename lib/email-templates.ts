@@ -88,6 +88,7 @@ export type ApplicationData = {
   why_interested: string;
   cv_link?: string | null;
   cv_file_name?: string | null;
+  apply_url?: string | null;
   created_at: string;
 };
 
@@ -99,6 +100,7 @@ export function applicationTemplate(d: ApplicationData): { subject: string; html
       ${row("Job", `${d.job_title} at ${d.company_name}`)}
       ${row("CV File", d.cv_file_name ?? null)}
       ${row("CV Link", d.cv_link ? `<a href="${d.cv_link}" style="color:#C8501A">${d.cv_link}</a>` : null)}
+      ${row("Original Posting", d.apply_url ? `<a href="${d.apply_url}" style="color:#C8501A">${d.apply_url}</a>` : null)}
       ${row("Submitted", new Date(d.created_at).toLocaleString())}
     </table>
     <div style="margin-top:16px;padding:14px;background:#FAF9F7;border-radius:8px;border:1px solid #E5E0D8">
