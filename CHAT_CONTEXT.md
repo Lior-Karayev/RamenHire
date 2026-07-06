@@ -55,6 +55,11 @@ In rough chronological order (see `git log` for exact commits):
 - **Migrated job listings from a hardcoded array to a real `job_listings` Supabase table** — `app/page.tsx` is now a server component; interactive UI lives in `app/HomeClient.tsx`
 - Internal apply modal restored on job cards (CV upload + link fallback), FK'd to `job_listings.id`
 - SEO pass: "remote" added to title/H1/hero subtitle, brand name prepended to meta description, keyword reinforcement
+- Homepage stats bar (dynamic job count from `totalCount` + hardcoded countries/bootstrapped/VC-funding stats), between hero and value props
+- "Why Bootstrapped?" 2x2 explainer section (no layoff roulette, profitable by default, founders who decide, you stay for years)
+- Employer CTA section between job listings and email signup, linking to `/post-job?utm_source=homepage&utm_medium=cta&utm_campaign=employers`
+- Hover/tap tooltip on the "Bootstrapped ✓" job-card badge explaining the term (tap auto-hides after 3s on mobile)
+- Positioning copy pass based on real user feedback: hero subheadline and employer CTA now reinforce "funding philosophy is part of the hiring criteria"; meta description updated to match
 
 ---
 
@@ -164,8 +169,8 @@ Confirmed by the user on 2026-07-06 — all active:
 
 **Deployed to production (ramenhire.com via Vercel, auto-deploy on push to `main`):**
 - All 5 DB migrations, including `job_listings` table and the `applications.job_id` FK
-- All features listed in section 3 (job listings from DB, pagination, apply modal, post-job form, CV upload, email notifications, SEO/JSON-LD, GA4 event tracking)
-- Latest known production commit: `e78cc40` ("seo: prepend brand name to meta description")
+- All features listed in section 3 (job listings from DB, pagination, apply modal, post-job form, CV upload, email notifications, SEO/JSON-LD, GA4 event tracking, stats bar, Why Bootstrapped section, employer CTA, badge tooltip, positioning copy pass)
+- Latest known production commit: `8a48fb8` ("docs: add CHAT_CONTEXT.md onboarding doc for new Claude sessions"), homepage feature work in `7725c2c`. Verified live on ramenhire.com 2026-07-06 — no DB migration was needed for this push (pure UI/copy changes).
 
 **Env vars on Vercel — all confirmed set (2026-07-06):**
 - `NEXT_PUBLIC_SUPABASE_URL` ✅
