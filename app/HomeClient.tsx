@@ -47,6 +47,35 @@ const valueProps = [
 
 const ROLE_OPTIONS = ["Engineering", "Design", "Product", "Marketing", "Support", "Other"];
 
+const whyBootstrappedCards = [
+  {
+    icon: "🛡️",
+    title: "No layoff roulette",
+    text: "Your job is funded by revenue, not a funding round that might not close.",
+  },
+  {
+    icon: "📈",
+    title: "Profitable by default",
+    text: "These companies don't need to grow 10x to survive. They just need to keep their customers happy.",
+  },
+  {
+    icon: "🧭",
+    title: "Founders who decide",
+    text: "No committees, no board approval. The people building the product make the calls.",
+  },
+  {
+    icon: "🌱",
+    title: "You stay for years",
+    text: "Bootstrapped companies have dramatically lower turnover. People actually like working there.",
+  },
+];
+
+const employerBenefits = [
+  "Candidates who understand bootstrapped culture",
+  "No noise from people chasing FAANG salaries",
+  "Free during early access — no credit card needed",
+];
+
 type ApplyForm = { name: string; email: string; why: string; cv: string };
 type SubForm = { name: string; email: string; roles: string[] };
 type Status = "idle" | "loading" | "success" | "error";
@@ -89,6 +118,16 @@ export default function HomeClient({ jobs, totalCount }: Props) {
       setJobsVisible(true);
       jobsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 200);
+  }
+
+  // ── Bootstrapped badge tooltip ───────────────────────────
+  const [tooltipJobId, setTooltipJobId] = useState<string | null>(null);
+  const tooltipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function tapTooltip(jobId: string) {
+    setTooltipJobId(jobId);
+    if (tooltipTimeoutRef.current) clearTimeout(tooltipTimeoutRef.current);
+    tooltipTimeoutRef.current = setTimeout(() => setTooltipJobId(null), 3000);
   }
 
   // ── Apply modal ──────────────────────────────────────────
@@ -722,7 +761,10 @@ export default function HomeClient({ jobs, totalCount }: Props) {
             Startups
           </h1>
           <p className="text-xl leading-relaxed mb-10" style={{ color: "#6B6560" }}>
-            No VC pressure. No layoff roulette. Just calm, profitable bootstrapped startups hiring great people for the long run.
+            No VC pressure. No layoff roulette. Just calm, profitable bootstrapped startups hiring great people for the long run.{" "}
+            <span style={{ color: "#1A1A1A" }}>
+              Where company funding philosophy is part of the hiring criteria.
+            </span>
           </p>
           <div className="flex flex-wrap gap-3">
             <a
@@ -757,6 +799,67 @@ export default function HomeClient({ jobs, totalCount }: Props) {
                 $99
               </span>
             </a>
+          </div>
+        </div>
+      </section>
+
+      {/* ── STATS BAR ─────────────────────────────────────── */}
+      <section className="border-y" style={{ borderColor: "#E5E0D8", backgroundColor: "#FAF9F7" }}>
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="grid grid-cols-2 md:grid-cols-4">
+            {[
+              { value: `${totalCount} jobs`, label: "Open positions" },
+              { value: "6 countries", label: "Hiring worldwide" },
+              { value: "100% bootstrapped", label: "Verified listings" },
+              { value: "0 VC funding", label: "Across all companies" },
+            ].map((stat, i) => (
+              <div
+                key={stat.label}
+                className={`flex flex-col items-center text-center px-4 py-6 ${
+                  i === 1 || i === 3 ? "border-l" : ""
+                } ${i >= 2 ? "border-t md:border-t-0" : ""} ${i === 2 ? "md:border-l" : ""}`}
+                style={{ borderColor: "#E5E0D8" }}
+              >
+                <span className="text-lg sm:text-xl font-bold" style={{ color: "#C8501A" }}>
+                  {stat.value}
+                </span>
+                <span className="text-xs mt-1" style={{ color: "#9CA3AF" }}>
+                  {stat.label}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── WHY BOOTSTRAPPED ──────────────────────────────── */}
+      <section style={{ backgroundColor: "#F0EDE8" }}>
+        <div className="max-w-5xl mx-auto px-6 py-20">
+          <div className="max-w-2xl mx-auto text-center mb-12">
+            <h2 className="text-2xl sm:text-3xl font-semibold mb-4" style={{ color: "#1A1A1A" }}>
+              Why bootstrapped companies?
+            </h2>
+            <p className="text-base leading-relaxed" style={{ color: "#6B6560" }}>
+              Bootstrapped isn&apos;t just how a company is financed — it&apos;s a signal for
+              how decisions get made, who has power, and whether your job exists next year.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {whyBootstrappedCards.map((card) => (
+              <div
+                key={card.title}
+                className="rounded-xl border p-6"
+                style={{ backgroundColor: "#FFFFFF", borderColor: "#E5E0D8" }}
+              >
+                <div className="text-3xl mb-4">{card.icon}</div>
+                <h3 className="text-base font-bold mb-2" style={{ color: "#1A1A1A" }}>
+                  {card.title}
+                </h3>
+                <p className="text-sm leading-relaxed" style={{ color: "#6B6B6B" }}>
+                  {card.text}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -828,14 +931,33 @@ export default function HomeClient({ jobs, totalCount }: Props) {
                       </span>
                       {job.is_bootstrapped && (
                         <span
-                          className="text-xs font-medium px-2 py-0.5 rounded-md border"
-                          style={{
-                            color: "#5C7A5C",
-                            borderColor: "#5C7A5C",
-                            backgroundColor: "#F0F4F0",
+                          className="relative inline-block"
+                          onMouseEnter={() => setTooltipJobId(job.id)}
+                          onMouseLeave={() => setTooltipJobId(null)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            tapTooltip(job.id);
                           }}
                         >
-                          Bootstrapped ✓
+                          <span
+                            className="text-xs font-medium px-2 py-0.5 rounded-md border cursor-default"
+                            style={{
+                              color: "#5C7A5C",
+                              borderColor: "#5C7A5C",
+                              backgroundColor: "#F0F4F0",
+                            }}
+                          >
+                            Bootstrapped ✓
+                          </span>
+                          {tooltipJobId === job.id && (
+                            <span
+                              className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-10 w-64 max-w-[70vw] px-3 py-2 rounded-md text-xs leading-relaxed text-left font-normal"
+                              style={{ backgroundColor: "#1A1A1A", color: "#FFFFFF" }}
+                            >
+                              This company is self-funded with no VC investment. Bootstrapped =
+                              profitable, stable, founder-controlled.
+                            </span>
+                          )}
                         </span>
                       )}
                     </div>
@@ -987,6 +1109,65 @@ export default function HomeClient({ jobs, totalCount }: Props) {
             )}
           </>
         )}
+      </section>
+
+      {/* ── EMPLOYER CTA ──────────────────────────────────── */}
+      <section className="max-w-5xl mx-auto px-6 py-4 pb-16">
+        <div
+          className="rounded-xl border px-6 py-12 sm:px-12 sm:py-14 text-center sm:text-left"
+          style={{ backgroundColor: "#F5F0EB", borderColor: "#E5E0D8" }}
+        >
+          <div className="max-w-xl mx-auto sm:mx-0">
+            <span
+              className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full border mb-6"
+              style={{ color: "#5C7A5C", borderColor: "#5C7A5C", backgroundColor: "#F0F4F0" }}
+            >
+              For Bootstrapped Founders
+            </span>
+
+            <h2 className="text-2xl sm:text-3xl font-bold mb-3" style={{ color: "#1A1A1A" }}>
+              Hiring at a bootstrapped company?
+            </h2>
+
+            <p className="text-base leading-relaxed mb-6" style={{ color: "#6B6560" }}>
+              Reach job seekers who specifically want to work at calm, profitable, founder-run
+              companies. No VC-backed chaos. Just the right candidates. Candidates who use
+              funding philosophy as a hiring filter — and choose bootstrapped on purpose.
+            </p>
+
+            <ul className="flex flex-col gap-2 mb-8 items-center sm:items-start">
+              {employerBenefits.map((point) => (
+                <li
+                  key={point}
+                  className="flex items-start gap-2 text-sm"
+                  style={{ color: "#1A1A1A" }}
+                >
+                  <span style={{ color: "#C8501A" }}>✓</span>
+                  <span>{point}</span>
+                </li>
+              ))}
+            </ul>
+
+            <a
+              href="/post-job?utm_source=homepage&utm_medium=cta&utm_campaign=employers"
+              className="inline-block w-full sm:w-auto text-center px-8 py-3 rounded-lg text-sm font-medium transition-colors"
+              style={{ backgroundColor: "#C8501A", color: "#FAF9F7" }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#A8401A";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#C8501A";
+              }}
+              onClick={() => gtag("event", "post_job_click")}
+            >
+              Post a Job — It&apos;s Free 🍜
+            </a>
+
+            <p className="text-xs mt-3" style={{ color: "#6B6560" }}>
+              All listings reviewed within 24 hours
+            </p>
+          </div>
+        </div>
       </section>
 
       {/* ── EMAIL SIGNUP ──────────────────────────────────── */}
