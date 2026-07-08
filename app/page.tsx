@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import HomeClient, { type JobListing } from "./HomeClient";
+import type { Company } from "@/lib/companies";
 
 function buildJobPostingSchema(job: JobListing) {
   return {
@@ -25,6 +26,7 @@ function buildJobPostingSchema(job: JobListing) {
 export default async function Home() {
   let jobs: JobListing[] = [];
   let totalCount = 0;
+  let companies: Company[] = [];
 
   try {
     const { data, count, error } = await supabase
@@ -41,6 +43,17 @@ export default async function Home() {
     // Render empty state rather than crash if DB is unreachable
   }
 
+  try {
+    const { data, error } = await supabase
+      .from("companies")
+      .select("*")
+      .eq("status", "approved");
+
+    if (!error) companies = data ?? [];
+  } catch {
+    // Company linking is a progressive enhancement — ignore failures
+  }
+
   const jobPostingSchemas = jobs.map(buildJobPostingSchema);
 
   return (
@@ -51,7 +64,7 @@ export default async function Home() {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jobPostingSchemas) }}
         />
       )}
-      <HomeClient jobs={jobs} totalCount={totalCount} />
+      <HomeClient jobs={jobs} totalCount={totalCount} companies={companies} />
     </>
   );
 }

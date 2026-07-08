@@ -2,8 +2,10 @@
 
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-
-declare function gtag(command: string, action: string, params?: Record<string, unknown>): void;
+import { companyMatchesJob, type Company } from "@/lib/companies";
+import { trackEvent } from "@/lib/analytics";
+import SiteFooter from "@/components/SiteFooter";
+import TurnstileWidget from "@/components/TurnstileWidget";
 
 const POST_JOB_URL = "/post-job";
 
@@ -27,24 +29,6 @@ export type JobListing = {
   updated_at: string;
 };
 
-const valueProps = [
-  {
-    icon: "✦",
-    title: "Verified Bootstrapped",
-    body: "Every company is manually reviewed. No VC rounds, no Series A on the way, no secret funding. Just founders who built something real.",
-  },
-  {
-    icon: "◎",
-    title: "Profitable by Default",
-    body: "These companies don't need your next sprint to hit growth targets. Revenue comes from customers, not investors chasing a 10x exit.",
-  },
-  {
-    icon: "◻",
-    title: "No Pitch Culture",
-    body: "Calm teams, sustainable pace, thoughtful roadmaps. Work that fits a life — not a startup that asks you to live for work.",
-  },
-];
-
 const ROLE_OPTIONS = ["Engineering", "Design", "Product", "Marketing", "Support", "Other"];
 
 const whyBootstrappedCards = [
@@ -67,6 +51,16 @@ const whyBootstrappedCards = [
     icon: "🌱",
     title: "You stay for years",
     text: "Bootstrapped companies have dramatically lower turnover. People actually like working there.",
+  },
+  {
+    icon: "🔍",
+    title: "Verified bootstrapped",
+    text: "Every company is manually reviewed. No VC rounds, no Series A on the way, no secret funding.",
+  },
+  {
+    icon: "🧘",
+    title: "No pitch culture",
+    text: "Calm teams, sustainable pace, thoughtful roadmaps. Work that fits a life, not a startup that asks you to live for work.",
   },
 ];
 
@@ -98,9 +92,14 @@ function blurGray(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) {
 type Props = {
   jobs: JobListing[];
   totalCount: number;
+  companies: Company[];
 };
 
-export default function HomeClient({ jobs, totalCount }: Props) {
+export default function HomeClient({ jobs, totalCount, companies }: Props) {
+  function matchedCompanySlug(job: JobListing): string | null {
+    const match = companies.find((c) => companyMatchesJob(c, job));
+    return match?.slug ?? null;
+  }
   // ── Pagination ───────────────────────────────────────────
   const JOBS_PER_PAGE = 6;
   const [currentPage, setCurrentPage] = useState(1);
@@ -139,6 +138,7 @@ export default function HomeClient({ jobs, totalCount }: Props) {
   const [cvFileError, setCvFileError] = useState("");
   const [cvUploadStage, setCvUploadStage] = useState<"idle" | "uploading" | "done" | "error">("idle");
   const [isDragOver, setIsDragOver] = useState(false);
+  const [applyTurnstileToken, setApplyTurnstileToken] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ── Subscribe form ───────────────────────────────────────
@@ -181,6 +181,20 @@ export default function HomeClient({ jobs, totalCount }: Props) {
     setTimeout(() => setPopupMounted(false), 200);
   }
 
+  // Deep-link support: /?apply=<job_id> (used by company profile pages) reopens
+  // the same internal apply flow rather than duplicating it on another page.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const applyId = params.get("apply");
+    if (!applyId) return;
+    const job = jobs.find((j) => j.id === applyId);
+    if (job) openApplyModal(job);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("apply");
+    window.history.replaceState({}, "", url.toString());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function openApplyModal(job: JobListing) {
     setSelectedJob(job);
     setApplyForm({ name: "", email: "", why: "", cv: "" });
@@ -190,8 +204,9 @@ export default function HomeClient({ jobs, totalCount }: Props) {
     setCvFileError("");
     setCvUploadStage("idle");
     setIsDragOver(false);
+    setApplyTurnstileToken("");
     if (fileInputRef.current) fileInputRef.current.value = "";
-    gtag("event", "apply_click", { job_title: job.title, company_name: job.company });
+    trackEvent("apply_click", { job_title: job.title, company_name: job.company });
   }
 
   function closeApplyModal() {
@@ -204,77 +219,60 @@ export default function HomeClient({ jobs, totalCount }: Props) {
     setApplyStatus("loading");
     setApplyError("");
 
-    let storagePath: string | null = null;
-    let storageFileName: string | null = null;
-
-    if (cvFile) {
-      setCvUploadStage("uploading");
-      const timestamp = Date.now();
-      const ext = (cvFile.name.split(".").pop() ?? "pdf").toLowerCase();
-      const path = `${slugify(selectedJob.title)}/${slugify(selectedJob.company)}/${timestamp}.${ext}`;
-
-      const { error: uploadError } = await supabase
-        .storage
-        .from("cvs")
-        .upload(path, cvFile, { cacheControl: "3600", upsert: false });
-
-      if (uploadError) {
-        setCvUploadStage("error");
-        setApplyStatus("error");
-        const msg = uploadError.message?.toLowerCase() ?? "";
-        setApplyError(
-          msg.includes("not found") || msg.includes("unavailable") || msg.includes("bucket")
-            ? "File upload unavailable. Please paste a link instead."
-            : "Upload failed. Please try again or paste a link to your CV instead."
-        );
-        return;
-      }
-
-      storagePath = path;
-      storageFileName = cvFile.name;
-      setCvUploadStage("done");
-    }
-
-    const { error } = await supabase.from("applications").insert({
-      job_id: selectedJob.id,
-      job_title: selectedJob.title,
-      company_name: selectedJob.company,
-      applicant_name: applyForm.name,
-      applicant_email: applyForm.email,
-      why_interested: applyForm.why,
-      cv_link: applyForm.cv || null,
-      cv_storage_path: storagePath,
-      cv_file_name: storageFileName,
-    });
-
-    if (error) {
+    if (!applyTurnstileToken) {
       setApplyStatus("error");
-      setApplyError("Something went wrong. Please try again.");
+      setApplyError("Please complete the verification check.");
       return;
     }
 
-    setApplyStatus("success");
-    gtag("event", "application_submitted", {
-      job_title: selectedJob.title,
-      company_name: selectedJob.company,
-    });
-
-    fetch("/api/notify", {
+    // Metadata goes through the rate-limited/Turnstile-gated route first;
+    // the server mints a signed upload URL scoped to the new application's
+    // own id, so the file bytes never touch the anon-writable Storage API.
+    const res = await fetch("/api/apply", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        type: "application",
-        applicant_name: applyForm.name,
-        applicant_email: applyForm.email,
+        job_id: selectedJob.id,
         job_title: selectedJob.title,
         company_name: selectedJob.company,
+        applicant_name: applyForm.name,
+        applicant_email: applyForm.email,
         why_interested: applyForm.why,
         cv_link: applyForm.cv || null,
-        cv_file_name: storageFileName,
+        cv_file_name: cvFile?.name ?? null,
         apply_url: selectedJob.apply_url,
-        created_at: new Date().toISOString(),
+        turnstile_token: applyTurnstileToken,
       }),
-    }).catch((err) => console.error("Admin notification failed:", err));
+    });
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      setApplyStatus("error");
+      setApplyError(body.message ?? "Something went wrong. Please try again.");
+      return;
+    }
+
+    const data = await res.json().catch(() => ({}));
+
+    if (cvFile && data.upload) {
+      setCvUploadStage("uploading");
+      const { error: uploadError } = await supabase
+        .storage
+        .from(data.upload.bucket)
+        .uploadToSignedUrl(data.upload.path, data.upload.token, cvFile);
+
+      // The application row already exists at this point — a failed file
+      // upload doesn't invalidate the submission (there's a cv_link fallback
+      // and this is a private, admin-only reference), so just surface a
+      // non-blocking notice instead of treating the whole submit as failed.
+      setCvUploadStage(uploadError ? "error" : "done");
+    }
+
+    setApplyStatus("success");
+    trackEvent("application_submitted", {
+      job_title: selectedJob.title,
+      company_name: selectedJob.company,
+    });
   }
 
   async function submitSubscribe(e: React.FormEvent) {
@@ -282,36 +280,25 @@ export default function HomeClient({ jobs, totalCount }: Props) {
     setSubStatus("loading");
     setSubError("");
 
-    const { error } = await supabase.from("subscribers").insert({
-      full_name: subForm.name,
-      email: subForm.email,
-      role_types: subForm.roles.length > 0 ? subForm.roles : null,
+    const res = await fetch("/api/subscribe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        full_name: subForm.name,
+        email: subForm.email,
+        role_types: subForm.roles.length > 0 ? subForm.roles : null,
+      }),
     });
 
-    if (error) {
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
       setSubStatus("error");
-      setSubError(
-        error.code === "23505"
-          ? "You're already subscribed with this email."
-          : "Something went wrong. Please try again."
-      );
+      setSubError(body.message ?? "Something went wrong. Please try again.");
       return;
     }
 
     setSubStatus("success");
-    gtag("event", "subscribe_submitted");
-
-    fetch("/api/notify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        type: "subscriber",
-        full_name: subForm.name,
-        email: subForm.email,
-        role_types: subForm.roles,
-        created_at: new Date().toISOString(),
-      }),
-    }).catch((err) => console.error("Admin notification failed:", err));
+    trackEvent("subscribe_submitted");
   }
 
   function toggleRole(role: string) {
@@ -331,10 +318,6 @@ export default function HomeClient({ jobs, totalCount }: Props) {
   ];
   const ALLOWED_EXT = [".pdf", ".doc", ".docx"];
   const MAX_BYTES = 5 * 1024 * 1024;
-
-  function slugify(str: string) {
-    return str.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-  }
 
   function formatBytes(bytes: number) {
     return bytes < 1024 * 1024
@@ -446,7 +429,7 @@ export default function HomeClient({ jobs, totalCount }: Props) {
                 style={{ backgroundColor: "#C8501A", color: "#FAF9F7" }}
                 onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#A8401A"; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#C8501A"; }}
-                onClick={() => gtag("event", "launch_popup_cta_click")}
+                onClick={() => trackEvent("launch_popup_cta_click")}
               >
                 Post a Job — It&apos;s Free →
               </a>
@@ -506,6 +489,11 @@ export default function HomeClient({ jobs, totalCount }: Props) {
                   <p className="text-sm" style={{ color: "#6B6560" }}>
                     We&apos;ll review your CV and be in touch soon.
                   </p>
+                  {cvUploadStage === "error" && (
+                    <p className="text-sm mt-3" style={{ color: "#C8501A" }}>
+                      Your application was sent, but the CV file didn&apos;t upload. Feel free to email it directly or add a link next time.
+                    </p>
+                  )}
                 </div>
               ) : (
                 <>
@@ -677,6 +665,12 @@ export default function HomeClient({ jobs, totalCount }: Props) {
                       />
                     </div>
 
+                    <TurnstileWidget
+                      resetKey={selectedJob?.id}
+                      onVerify={setApplyTurnstileToken}
+                      onExpire={() => setApplyTurnstileToken("")}
+                    />
+
                     {applyStatus === "error" && (
                       <p className="text-sm" style={{ color: "#C8501A" }}>
                         {applyError}
@@ -685,12 +679,12 @@ export default function HomeClient({ jobs, totalCount }: Props) {
 
                     <button
                       type="submit"
-                      disabled={applyStatus === "loading"}
+                      disabled={applyStatus === "loading" || !applyTurnstileToken}
                       className="w-full py-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors"
                       style={{
-                        backgroundColor: applyStatus === "loading" ? "#D4845A" : "#C8501A",
+                        backgroundColor: applyStatus === "loading" || !applyTurnstileToken ? "#D4845A" : "#C8501A",
                         color: "#FAF9F7",
-                        cursor: applyStatus === "loading" ? "not-allowed" : "pointer",
+                        cursor: applyStatus === "loading" || !applyTurnstileToken ? "not-allowed" : "pointer",
                       }}
                     >
                       {applyStatus === "loading" && (
@@ -735,7 +729,7 @@ export default function HomeClient({ jobs, totalCount }: Props) {
               (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#C8501A";
               (e.currentTarget as HTMLAnchorElement).style.borderColor = "#C8501A";
             }}
-            onClick={() => gtag("event", "post_job_click")}
+            onClick={() => trackEvent("post_job_click")}
           >
             Post a Job
           </a>
@@ -792,7 +786,7 @@ export default function HomeClient({ jobs, totalCount }: Props) {
                 (e.currentTarget as HTMLAnchorElement).style.borderColor = "#E5E0D8";
                 (e.currentTarget as HTMLAnchorElement).style.color = "#1A1A1A";
               }}
-              onClick={() => gtag("event", "post_job_click")}
+              onClick={() => trackEvent("post_job_click")}
             >
               <span>Post a Job — Free 🍜</span>
               <span className="text-xs font-normal" style={{ color: "#9CA3AF", textDecoration: "line-through" }}>
@@ -844,7 +838,7 @@ export default function HomeClient({ jobs, totalCount }: Props) {
               how decisions get made, who has power, and whether your job exists next year.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {whyBootstrappedCards.map((card) => (
               <div
                 key={card.title}
@@ -857,27 +851,6 @@ export default function HomeClient({ jobs, totalCount }: Props) {
                 </h3>
                 <p className="text-sm leading-relaxed" style={{ color: "#6B6B6B" }}>
                   {card.text}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── VALUE PROPS ───────────────────────────────────── */}
-      <section className="border-y" style={{ borderColor: "#E5E0D8" }}>
-        <div className="max-w-5xl mx-auto px-6 py-16">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-            {valueProps.map((prop) => (
-              <div key={prop.title}>
-                <div className="text-2xl mb-4" style={{ color: "#C8501A" }}>
-                  {prop.icon}
-                </div>
-                <h3 className="text-base font-semibold mb-2" style={{ color: "#1A1A1A" }}>
-                  {prop.title}
-                </h3>
-                <p className="text-sm leading-relaxed" style={{ color: "#6B6560" }}>
-                  {prop.body}
                 </p>
               </div>
             ))}
@@ -962,7 +935,20 @@ export default function HomeClient({ jobs, totalCount }: Props) {
                       )}
                     </div>
                     <div className="flex items-center gap-2 text-sm" style={{ color: "#6B6560" }}>
-                      <span>{job.company}</span>
+                      {matchedCompanySlug(job) ? (
+                        <a
+                          href={`/companies/${matchedCompanySlug(job)}`}
+                          className="transition-colors"
+                          style={{ color: "#6B6560" }}
+                          onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "#C8501A"; }}
+                          onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "#6B6560"; }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {job.company}
+                        </a>
+                      ) : (
+                        <span>{job.company}</span>
+                      )}
                       <span>·</span>
                       <span>{job.location}</span>
                       <span>·</span>
@@ -1158,7 +1144,7 @@ export default function HomeClient({ jobs, totalCount }: Props) {
               onMouseLeave={(e) => {
                 (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#C8501A";
               }}
-              onClick={() => gtag("event", "post_job_click")}
+              onClick={() => trackEvent("post_job_click")}
             >
               Post a Job — It&apos;s Free 🍜
             </a>
@@ -1298,31 +1284,7 @@ export default function HomeClient({ jobs, totalCount }: Props) {
         </div>
       </section>
 
-      {/* ── FOOTER ────────────────────────────────────────── */}
-      <footer className="max-w-5xl mx-auto px-6 py-10">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <span className="text-sm font-medium" style={{ color: "#1A1A1A" }}>
-            Ramen<span style={{ color: "#C8501A" }}>Hire</span>
-          </span>
-          <p className="text-sm text-center" style={{ color: "#6B6560" }}>
-            © 2026 RamenHire — Jobs at companies that don&apos;t need your hustle.
-          </p>
-          <a
-            href={POST_JOB_URL}
-            className="text-sm font-medium transition-colors"
-            style={{ color: "#6B6560" }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.color = "#C8501A";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.color = "#6B6560";
-            }}
-            onClick={() => gtag("event", "post_job_click")}
-          >
-            Post a Job
-          </a>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

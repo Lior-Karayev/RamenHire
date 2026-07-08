@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import Script from "next/script";
+import CookieConsentBanner from "@/components/CookieConsentBanner";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://ramenhire.com"),
+  metadataBase: new URL("https://www.ramenhire.com"),
   title: {
     default: "Remote Jobs at Bootstrapped, Profitable Startups | RamenHire",
     template: "%s | RamenHire",
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
     title: "Remote Jobs at Bootstrapped, Profitable Startups | RamenHire",
     description:
       "Find jobs at calm, self-funded companies. No VC pressure, no layoff roulette. Just profitable startups hiring great people.",
-    creator: "@ramenhire",
+    creator: "@L_Build",
     images: ["https://www.ramenhire.com/og-image.png"],
   },
   icons: {
@@ -64,7 +64,7 @@ export const metadata: Metadata = {
     apple: [{ url: "/apple-touch-icon.png" }],
   },
   alternates: {
-    canonical: "https://ramenhire.com",
+    canonical: "https://www.ramenhire.com",
   },
 };
 
@@ -78,11 +78,11 @@ export default function RootLayout({
       "@context": "https://schema.org",
       "@type": "WebSite",
       name: "RamenHire",
-      url: "https://ramenhire.com",
+      url: "https://www.ramenhire.com",
       description: "Job board exclusively for bootstrapped, self-funded, profitable startups.",
       potentialAction: {
         "@type": "SearchAction",
-        target: "https://ramenhire.com#jobs",
+        target: "https://www.ramenhire.com#jobs",
         "query-input": "required name=search_term_string",
       },
     },
@@ -96,18 +96,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         {children}
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-1X6XVB58KC"
-          strategy="afterInteractive"
-        />
-        <Script id="ga4-init" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-1X6XVB58KC');
-          `}
-        </Script>
+        <CookieConsentBanner />
       </body>
     </html>
   );

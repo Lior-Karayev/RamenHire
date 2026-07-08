@@ -111,8 +111,8 @@ All tables: RLS enabled, anon can INSERT only, authenticated can SELECT/UPDATE/D
 - Private (not public)
 - File size limit: 5 MB
 - Allowed MIME: `application/pdf`, `application/msword`, `application/vnd.openxmlformats-officedocument.wordprocessingml.document`
-- Path pattern: `{job-slug}/{company-slug}/{timestamp}_{filename}`
-- RLS: anon INSERT, authenticated SELECT + DELETE
+- Path pattern: `{application_id}/{timestamp}.{ext}`
+- RLS: no anon INSERT — uploads only via signed upload URLs minted server-side (`lib/storage-upload.ts`) and scoped to the application's own id; authenticated SELECT + DELETE. Same signed-URL model applies to the `company-logos` bucket (see `app/api/companies/register/route.ts` and `app/api/companies/confirm-logo/route.ts`).
 
 ---
 

@@ -1,0 +1,128 @@
+RAMENHIRE NEW JOB LISTINGS — Batch 2
+All verified bootstrapped companies with confirmed open positions.
+
+---
+
+JOB 12
+Title: Senior Product Manager
+Company: Toggl
+Company Website: https://toggl.com
+Salary: €90,000/year (~$98,000)
+Location: Remote · Worldwide (UTC-4 to UTC+4)
+Job Type: Full-time
+Tags: Product, SaaS, Productivity, Remote
+Apply URL: https://jobs.ashbyhq.com/toggl/941a10e2-dea0-4d62-9e0a-49fb4d8f39e5
+Bootstrapped proof: Bootstrapped since 2011, profitable, 130+ team across 40+ countries, no VC funding
+Description: Toggl builds simple yet powerful productivity tools used by 3+ million people. Fully bootstrapped and profitable since 2011. As Senior PM you'll own a Product Tribe end-to-end — direction, prioritization, and outcomes — working hands-on with design and engineering. You'll help build and launch Toggl Focus, their consolidated planning and time intelligence product. Unique perk: paid 3-5 day trial week before final offer.
+
+---
+
+JOB 13
+Title: Senior Frontend Engineer
+Company: Toggl
+Company Website: https://toggl.com
+Salary: €72,000/year (~$78,000)
+Location: Remote · Worldwide (UTC-4 to UTC+8)
+Job Type: Full-time
+Tags: Engineering, Frontend, React, TypeScript, SaaS
+Apply URL: https://toggl.com/jobs/toggl-senior-frontend/
+Bootstrapped proof: Bootstrapped since 2011, profitable, 130+ team across 40+ countries, no VC funding
+Description: Toggl is looking for a Senior Frontend Engineer to work at the intersection of speed, design, and experimentation. Build user-facing features using React and related technologies, focusing on team activation, onboarding, and conversion flows. Fully bootstrapped and profitable team of 130+ across 40 countries. Work from anywhere — London, Rio, Florence, your choice.
+
+---
+
+JOB 14
+Title: Content Production Manager
+Company: Kinsta
+Company Website: https://kinsta.com
+Salary: $60,000 – $80,000
+Location: Remote · Worldwide
+Job Type: Full-time
+Tags: Marketing, Content, SaaS, WordPress, Operations
+Apply URL: https://kinsta.com/careers/content-production-manager/
+Bootstrapped proof: Founded 2013, self-funded, profitable, 120,000+ customers, 97% satisfaction rating, remote-first since founding
+Description: Kinsta is one of the top managed WordPress hosting companies with 120,000+ customers including startups, universities, and Fortune 500s. Fully bootstrapped and profitable since 2013. Looking for a Content Production Manager to own end-to-end content workflows across blogs, product updates, GTM packages, and multimedia assets. Async-first culture across 40+ countries.
+
+---
+
+JOB 15
+Title: Internal Tools Developer
+Company: Kinsta
+Company Website: https://kinsta.com
+Salary: Competitive (not listed)
+Location: Remote · Worldwide
+Job Type: Full-time
+Tags: Engineering, Internal Tools, SaaS, WordPress
+Apply URL: https://kinsta.com/careers/
+Bootstrapped proof: Founded 2013, self-funded, profitable, 120,000+ customers, remote-first since founding
+Description: Kinsta is hiring an Internal Tools Developer to build and maintain custom tools for their customer support and operations teams. Use your development skills, curiosity, and ingenuity to solve real problems at a bootstrapped, profitable company that has never taken outside funding. Async-first team across 40+ countries.
+
+---
+
+JOB 16
+Title: Support Engineer
+Company: Kinsta
+Company Website: https://kinsta.com
+Salary: Competitive (not listed)
+Location: Remote · Worldwide
+Job Type: Full-time
+Tags: Customer Support, Engineering, WordPress, SaaS
+Apply URL: https://kinsta.com/careers/
+Bootstrapped proof: Founded 2013, self-funded, profitable, 120,000+ customers, 97% customer satisfaction rating
+Description: Kinsta is looking for a Support Engineer to provide world-class technical support via live chat. Use your technical knowledge, curiosity, and communication skills to help 120,000+ customers. Bootstrapped and profitable since 2013 with a 97% customer satisfaction rating. Fully remote team across 40+ countries.
+
+---
+
+JOB 17
+Title: Senior Backend Engineer
+Company: Toggl
+Company Website: https://toggl.com
+Salary: Competitive (not listed)
+Location: Remote · Worldwide
+Job Type: Full-time
+Tags: Engineering, Backend, Go, PostgreSQL, SaaS
+Apply URL: https://apply.hire.toggl.com/o23jy
+Bootstrapped proof: Bootstrapped since 2011, profitable, 130+ team across 40+ countries, no VC funding
+Description: Toggl is growing and looking for a Senior Backend Engineer to join their globally distributed team. Work on challenging backend problems for productivity tools used by 3+ million people. Bootstrapped and profitable since 2011. Paid 3-5 day trial week — you get to experience the team before committing.
+
+---
+
+JOB 18
+Title: Business Development Representative (EMEA)
+Company: Kinsta
+Company Website: https://kinsta.com
+Salary: Competitive (not listed)
+Location: Remote · EMEA
+Job Type: Full-time
+Tags: Sales, Business Development, SaaS, WordPress
+Apply URL: https://kinsta.com/careers/
+Bootstrapped proof: Founded 2013, self-funded, profitable, 120,000+ customers worldwide
+Description: Kinsta is looking for a Business Development Representative for the EMEA region to drive pipeline growth. Join a bootstrapped, profitable WordPress hosting company serving 120,000+ customers. Async-first culture, remote team across 40+ countries, professional development budget, and sabbatical after 3 years.
+
+---
+
+JOB 19
+Title: Account Manager (EMEA)
+Company: Kinsta
+Company Website: https://kinsta.com
+Salary: Competitive (not listed)
+Location: Remote · EMEA
+Job Type: Full-time
+Tags: Sales, Account Management, SaaS, WordPress
+Apply URL: https://kinsta.com/careers/
+Bootstrapped proof: Founded 2013, self-funded, profitable, 120,000+ customers worldwide
+Description: Kinsta is hiring an Account Manager for EMEA to manage existing client accounts and generate additional revenue. Join a bootstrapped, profitable company with a 97% customer satisfaction rating. Benefits include learning budget, paid parental leave, retirement plan, and sabbatical after 3 years.
+
+---
+
+JOB 20
+Title: Demand Generation Specialist
+Company: Kinsta
+Company Website: https://kinsta.com
+Salary: Competitive (not listed)
+Location: Remote · Worldwide
+Job Type: Full-time
+Tags: Marketing, Demand Generation, SaaS, Analytics
+Apply URL: https://kinsta.com/careers/
+Bootstrapped proof: Founded 2013, self-funded, profitable, 120,000+ customers worldwide
+Description: Kinsta is looking for a Demand Generation Specialist with a marketing operations focus to turn data, automation, and process excellence into pipeline growth. Join a bootstrapped, profitable company that has served 120,000+ customers since 2013. Async-first, fully remote team across 40+ countries.

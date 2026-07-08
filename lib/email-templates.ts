@@ -15,6 +15,24 @@ function row(label: string, value: string | undefined | null): string {
 }
 
 function wrap(title: string, body: string): string {
+  return wrapBase(
+    title,
+    body,
+    `<div style="margin-top:24px;padding-top:20px;border-top:1px solid #E5E0D8">
+        <a href="${DASHBOARD_URL}"
+           style="display:inline-block;background:#1A1A1A;color:#FAF9F7;text-decoration:none;font-size:13px;font-weight:500;padding:10px 18px;border-radius:8px">
+          Review in Supabase →
+        </a>
+      </div>`
+  );
+}
+
+// For emails sent to external recipients (not the admin) — no dashboard link.
+function wrapPublic(title: string, body: string): string {
+  return wrapBase(title, body, "");
+}
+
+function wrapBase(title: string, body: string, footer: string): string {
   return `
 <!DOCTYPE html>
 <html>
@@ -27,12 +45,7 @@ function wrap(title: string, body: string): string {
     <div style="padding:24px">
       <h2 style="margin:0 0 20px;font-size:18px;color:#1A1A1A">${title}</h2>
       ${body}
-      <div style="margin-top:24px;padding-top:20px;border-top:1px solid #E5E0D8">
-        <a href="${DASHBOARD_URL}"
-           style="display:inline-block;background:#1A1A1A;color:#FAF9F7;text-decoration:none;font-size:13px;font-weight:500;padding:10px 18px;border-radius:8px">
-          Review in Supabase →
-        </a>
-      </div>
+      ${footer}
     </div>
   </div>
 </body>
@@ -129,4 +142,89 @@ export function subscriberTemplate(d: SubscriberData): { subject: string; html: 
       ${row("Subscribed", new Date(d.created_at).toLocaleString())}
     </table>`;
   return { subject, html: wrap(subject, table) };
+}
+
+// ── Company Registration ────────────────────────────────────
+
+export type CompanyRegistrationData = {
+  name: string;
+  website: string;
+  contact_email: string;
+  description: string;
+  why_work_here: string;
+  team_size?: string | null;
+  revenue_range?: string | null;
+  founded_year?: number | null;
+  logo_url?: string | null;
+  created_at: string;
+};
+
+export function companyRegistrationAdminTemplate(
+  d: CompanyRegistrationData
+): { subject: string; html: string } {
+  const subject = `🍜 New Company Registration — ${d.name}`;
+  const table = `
+    <table cellpadding="0" cellspacing="0" style="width:100%">
+      ${row("Company", d.name)}
+      ${row("Website", `<a href="${d.website}" style="color:#C8501A">${d.website}</a>`)}
+      ${row("Contact", `<a href="mailto:${d.contact_email}" style="color:#C8501A">${d.contact_email}</a>`)}
+      ${row("Team Size", d.team_size ?? null)}
+      ${row("Revenue", d.revenue_range ?? null)}
+      ${row("Founded", d.founded_year ? String(d.founded_year) : null)}
+      ${row("Logo", d.logo_url ? `<a href="${d.logo_url}" style="color:#C8501A">View logo</a>` : "Not uploaded")}
+      ${row("Submitted", new Date(d.created_at).toLocaleString())}
+    </table>
+    <div style="margin-top:16px;padding:14px;background:#FAF9F7;border-radius:8px;border:1px solid #E5E0D8">
+      <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:#6B6560;text-transform:uppercase;letter-spacing:.05em">Description</p>
+      <p style="margin:0 0 12px;font-size:13px;color:#1A1A1A;line-height:1.6">${truncate(d.description)}</p>
+      <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:#6B6560;text-transform:uppercase;letter-spacing:.05em">Why Work Here</p>
+      <p style="margin:0;font-size:13px;color:#1A1A1A;line-height:1.6">${truncate(d.why_work_here)}</p>
+    </div>`;
+  return { subject, html: wrap(subject, table) };
+}
+
+export function companyRegistrationConfirmationTemplate(
+  d: Pick<CompanyRegistrationData, "name">
+): { subject: string; html: string } {
+  const subject = `🍜 We received your RamenHire profile — ${d.name}`;
+  const body = `
+    <p style="margin:0 0 12px;font-size:14px;color:#1A1A1A;line-height:1.6">
+      Thanks for registering <strong>${d.name}</strong> on RamenHire!
+    </p>
+    <p style="margin:0;font-size:14px;color:#1A1A1A;line-height:1.6">
+      We're reviewing your profile now and will email you at this address once
+      it's live — this usually takes 24–48 hours. No action needed from you in
+      the meantime.
+    </p>`;
+  return { subject, html: wrapPublic(subject, body) };
+}
+
+// ── Company Email Verification ──────────────────────────────
+
+export type CompanyVerificationData = {
+  name: string;
+  verify_url: string;
+};
+
+export function companyVerificationTemplate(
+  d: CompanyVerificationData
+): { subject: string; html: string } {
+  const subject = `🍜 Confirm your email to register ${d.name} on RamenHire`;
+  const body = `
+    <p style="margin:0 0 12px;font-size:14px;color:#1A1A1A;line-height:1.6">
+      Thanks for starting a RamenHire profile for <strong>${d.name}</strong>.
+      Confirm this is your email address to submit it for review:
+    </p>
+    <div style="margin:20px 0">
+      <a href="${d.verify_url}"
+         style="display:inline-block;background:#C8501A;color:#FAF9F7;text-decoration:none;font-size:14px;font-weight:600;padding:12px 24px;border-radius:8px">
+        Confirm your email →
+      </a>
+    </div>
+    <p style="margin:0;font-size:13px;color:#6B6560;line-height:1.6">
+      This link expires in 48 hours. If you didn't request this, you can
+      safely ignore this email — nothing is submitted for review until you
+      confirm.
+    </p>`;
+  return { subject, html: wrapPublic(subject, body) };
 }

@@ -38,7 +38,7 @@ No `lint` script defined. No test framework installed. No Stripe/payment integra
 In rough chronological order (see `git log` for exact commits):
 
 - Next.js app scaffold, SEO metadata, hydration fixes
-- GA4 analytics wired in via `next/script` (`G-1X6XVB58KC`)
+- GA4 analytics wired in via `next/script` (`G-1X6XVB58KC`) — as of 2026-07-07, gated behind cookie consent (see below), not unconditional
 - Automatic sitemap generation (`next-sitemap`)
 - OG image + social preview meta tags, Puppeteer screenshot script, favicon/manifest
 - JobPosting JSON-LD schema markup (fixed to resolve Search Console errors)
@@ -48,7 +48,7 @@ In rough chronological order (see `git log` for exact commits):
 - Two production bugs found & fixed:
   - CV upload 400 error on non-ASCII (Hebrew) filenames — fixed by storing as `{timestamp}.{ext}`, original name kept in `cv_file_name`
   - Live-site 403 "Invalid Compact JWS" — wrong Supabase key type on Vercel (`sb_publishable_*` instead of the JWT anon key)
-- Admin email notifications via Resend (`lib/email.ts`, `lib/email-templates.ts`, `app/api/notify/route.ts`) for all 3 form types → `liork03@gmail.com`, from `notifications@ramenhire.com`
+- Admin email notifications via Resend (`lib/email.ts`, `lib/email-templates.ts`) for all form types → `hello@ramenhire.com` (migrated from `liork03@gmail.com` on 2026-07-07 — see note in §12), from `notifications@ramenhire.com`. Originally routed through a shared `app/api/notify/route.ts`; that route was deleted 2026-07-07 once all four forms got their own dedicated, rate-limited API routes (`/api/apply`, `/api/post-job`, `/api/subscribe`, `/api/companies/register`) that each send their own email directly.
 - Launch-week popup (scroll-triggered, once per session, desktop only, shows dynamic job count)
 - Local dev setup: full Docker-based local Supabase stack + migration workflow (see section 4)
 - Job tags, pagination (6/page), strikethrough pricing UI, 7 additional job listings
@@ -56,10 +56,24 @@ In rough chronological order (see `git log` for exact commits):
 - Internal apply modal restored on job cards (CV upload + link fallback), FK'd to `job_listings.id`
 - SEO pass: "remote" added to title/H1/hero subtitle, brand name prepended to meta description, keyword reinforcement
 - Homepage stats bar (dynamic job count from `totalCount` + hardcoded countries/bootstrapped/VC-funding stats), between hero and value props
-- "Why Bootstrapped?" 2x2 explainer section (no layoff roulette, profitable by default, founders who decide, you stay for years)
+- "Why Bootstrapped?" explainer section (consolidated to a single 6-card section on 2026-07-07 — previously two overlapping sections with a duplicated "Profitable by Default" card)
 - Employer CTA section between job listings and email signup, linking to `/post-job?utm_source=homepage&utm_medium=cta&utm_campaign=employers`
 - Hover/tap tooltip on the "Bootstrapped ✓" job-card badge explaining the term (tap auto-hides after 3s on mobile)
 - Positioning copy pass based on real user feedback: hero subheadline and employer CTA now reinforce "funding philosophy is part of the hiring criteria"; meta description updated to match
+- **Company self-registration + public profiles** (2026-07-07): `/companies` (directory, approved-only), `/companies/register` (public form), `/companies/[slug]` (profile). New `companies` table, local-only — not yet promoted to production. `is_verified`/`is_bootstrapped` are admin-only fields, enforced via RLS. Homepage job cards link to a company's profile when a curated `job_listings` row matches by name/website.
+- **Email verification for company registration** (2026-07-07, same day, registration-only — apply/post-a-job/subscribe are unchanged): submitting the form no longer inserts a `pending` row directly. It inserts `status='unverified'` with a random token + 48h expiry, and sends a verification email via Resend. Clicking the link (`/companies/register/verify?token=...`) is what actually moves the row to `status='pending'` (into the admin queue) — done server-side via a service-role Supabase client (`lib/supabase-admin.ts`, `SUPABASE_SERVICE_ROLE_KEY` in `.env.local`) so `anon` never gets an UPDATE policy on `companies` at all. Expired links offer a one-click resend. Admin notification + company "we're reviewing it" confirmation emails now fire at verification-success time, not at initial submit.
+- **Privacy Policy, Terms of Use, GDPR cookie consent banner** (2026-07-07): `/privacy-policy`, `/terms-of-use`, footer links site-wide. GA4 (`gtag`) is no longer loaded unconditionally in `app/layout.tsx` — the `<Script>` tags are now conditionally rendered by `components/CookieConsentBanner.tsx` and genuinely absent from the page until a visitor accepts (verified empirically, not just configured). Declining after a prior accept actively clears the `_ga`/`_ga_1X6XVB58KC` cookies, not just stops refreshing them. Admin notifications migrated from `liork03@gmail.com` to `hello@ramenhire.com` — **mail delivery to that inbox was not confirmed as of 2026-07-07**, only that MX records point to Google Workspace at the domain level.
+- **Rate limiting + bot protection on all 4 public write paths** (2026-07-07): apply, post-job, subscribe, and company registration no longer insert directly from the browser via the anon key — `anon`'s INSERT grant was **revoked** on `applications`, `job_post_requests`, `subscribers`, and `companies` (see migration `20260707000006_rate_limiting_and_hardening.sql` plus the in-place edit to `20260707000005_create_companies.sql`, since that one was still local-only). Every write now goes through a new dedicated Route Handler (`/api/apply`, `/api/post-job`, `/api/subscribe`, `/api/companies/register`) using the `service_role` client, which is what makes the following actually enforceable rather than just cosmetic:
+  - **Rate limiting**: IP-based, backed by a new `rate_limit_hits` table (`lib/rate-limit.ts`) — 5/hour for apply/post-job/register, 3/hour for subscribe. Not Redis/Upstash — a Postgres count-then-insert check, appropriate for this site's traffic volume.
+  - **Cloudflare Turnstile** on apply + register only (post-job/subscribe skipped as lower priority): `components/TurnstileWidget.tsx` (client) + `lib/turnstile.ts` (server-side `siteverify` call). `.env.local` currently holds Cloudflare's published always-pass **test keys** — must be swapped for real keys from a Cloudflare dashboard before production.
+  - The old shared `app/api/notify/route.ts` was **deleted** — each new route sends its own email directly now.
+- **Signed upload URLs for `cvs` and `company-logos` Storage** (2026-07-08): closed the residual gap noted above — anon can no longer upload to either bucket directly. The `anon_upload_cvs`/`anon_upload_company_logos` RLS policies on `storage.objects` were dropped (migration `20260708000007_signed_storage_uploads.sql`), applied to **both local and production** (no environment split — signed URLs work identically against local Storage and the app code has no branching either way, so keeping schema identical avoids drift). New flow for both `/api/apply` and `/api/companies/register`:
+  - Client POSTs metadata first (through the existing rate-limited/Turnstile-gated route) with just the file's *name*, not its bytes.
+  - Server generates the row's id itself, mints a signed upload URL (`lib/storage-upload.ts`, `createSignedUploadUrl` via `service_role`) scoped to `{row_id}/{timestamp}.{ext}`, and returns it to the client.
+  - Client uploads the actual bytes via `uploadToSignedUrl` — the signed token authorizes the upload without needing any anon RLS grant at all.
+  - **CVs**: `cv_storage_path` is set optimistically at insert time. If the upload never completes (closed tab, network drop), the row is simply left referencing a path with no file — accepted as-is, since CVs are private/admin-only and there's already a `cv_link` fallback.
+  - **Company logos**: handled more carefully, because logos render **publicly** (`<img>`, no error fallback) on `/companies` and `/companies/[slug]`. `logo_url` is never set at insert time — instead `pending_logo_path` + a single-use `logo_confirm_token` (new nullable `companies` columns) are stored, and a new route `/api/companies/confirm-logo` promotes `pending_logo_path` → `logo_url` only after the client confirms the upload actually succeeded. A failed/abandoned logo upload just leaves `logo_url` null — registration still succeeds, logo stays genuinely optional.
+  - Bucket-level `file_size_limit`/`allowed_mime_types` enforcement is unaffected by this change (applies regardless of upload method).
 
 ---
 
@@ -100,10 +114,10 @@ id, company_name, contact_name, contact_email, company_website, revenue_range (e
 id, full_name, email (unique), role_types (text[]), created_at.
 
 ### Storage: `cvs` bucket
-Private, 5 MB limit, PDF/DOC/DOCX only. Path pattern: `{timestamp}.{ext}` (changed from original filename to fix non-ASCII bug). RLS: anon INSERT, authenticated SELECT + DELETE.
+Private, 5 MB limit, PDF/DOC/DOCX only. Path pattern: `{application_id}/{timestamp}.{ext}` (namespaced by the owning `applications` row's id since the 2026-07-08 signed-upload-URL rework — see section 3). RLS: no anon INSERT (uploads only via signed URLs minted server-side), authenticated SELECT + DELETE.
 
-**Migrations** live in `supabase/migrations/` (5 files, all applied to both local and production):
-`20260101000000_initial_schema.sql`, `20260101000001_cv_storage.sql`, `20260101000002_add_tags_to_job_post_requests.sql`, `20260705000003_create_job_listings.sql`, `20260705000004_add_job_id_to_applications.sql`.
+**Migrations** live in `supabase/migrations/` (all applied to both local and production):
+`20260101000000_initial_schema.sql`, `20260101000001_cv_storage.sql`, `20260101000002_add_tags_to_job_post_requests.sql`, `20260705000003_create_job_listings.sql`, `20260705000004_add_job_id_to_applications.sql`, `20260707000005_create_companies.sql`, `20260707000006_rate_limiting_and_hardening.sql`, `20260708000007_signed_storage_uploads.sql`.
 
 Note: `docs/DATABASE.md` predates the `job_listings` table and migration-based workflow — it's stale; this file and `CLAUDE.md` are more current.
 
@@ -194,7 +208,18 @@ Known open items, not a committed roadmap — confirm priority with the user:
 3. **Reddit** — no action needed beyond waiting; account is too new/low-karma for posts to survive. Revisit once the account ages and builds karma elsewhere.
 4. Let traffic accumulate before drawing conclusions from analytics — current volume (~23 users) is too small to be meaningful; revisit once volume is materially higher.
 5. Consider updating the stale `@ramenhire` Twitter Card handle in `app/layout.tsx` to `@L_Build` (see section 7).
-6. Decide whether a receiving/reply-to email inbox is needed, or if one-way admin notifications remain sufficient for this phase.
+6. Receiving/reply-to inbox question is now superseded by the `hello@ramenhire.com` mail-delivery check in the production-push checklist below.
+
+### Production-Push Checklist (target: 2026-07-08)
+
+Concrete and time-bound — distinct from the open items above. See [[rate-limiting-and-bot-protection]], [[legal-pages-and-consent]], [[companies-email-verification]] for the full technical context behind each item.
+
+- [ ] **`hello@ramenhire.com` mail delivery** — user will manually verify by sending a test email from their personal Gmail on 2026-07-08. **Do not assume this works until the user reports back confirmed** — admin notifications and the Privacy Policy's stated contact channel both depend on it.
+- [x] **Cloudflare Turnstile real keys** — done. Real site/secret keys are in place in both `.env.local` and Vercel Project Settings → Environment Variables (replacing the test keys used for local dev). No remaining action.
+- [x] **Storage bucket anon-upload restriction — done properly, both environments.** Superseded by the signed-upload-URL rework above (2026-07-08) — rather than a prod-only patch, direct anon uploads are now closed on **both** local and production via the same migration, since the real fix (signed URLs) carries no meaningful extra complexity locally. See the signed-upload-URLs entry earlier in this doc for the full architecture.
+- [ ] Resend usage check (currently 38/3000, healthy) — manual vendor-dashboard reminder, not urgent, revisit at push time.
+- [ ] Supabase plan/Spend Cap confirmation (no card on file, Spend Cap default protections apply) — manual vendor-dashboard reminder, not urgent, revisit at push time.
+- [x] Outreach email placeholders updated with the real production registration URL — done as of 2026-07-07, `outreach/outreach-emails.txt` uses `https://www.ramenhire.com/companies/register` directly (see section 13).
 
 ---
 
@@ -202,14 +227,17 @@ Known open items, not a committed roadmap — confirm priority with the user:
 
 - Resend domain **`ramenhire.com` is verified** (DKIM verified) — deliverability from this domain is properly configured, not just "set up and hoping."
 - Sending address: `notifications@ramenhire.com`
-- Admin notifications confirmed working in production for all 3 form types: `applications`, `job_post_requests`, `subscribers` (see `app/api/notify/route.ts`, `lib/email.ts`, `lib/email-templates.ts`).
-- **No receiving/reply-to inbox exists yet** — this is purely one-way outbound notification to the admin (`liork03@gmail.com`), not a monitored `@ramenhire.com` mailbox. If candidates or employers ever need to reply to a RamenHire email, there's currently nowhere for that to land.
+- Admin notifications confirmed working in production for all 3 form types: `applications`, `job_post_requests`, `subscribers`. **As of 2026-07-07 this moved off the shared `app/api/notify/route.ts` (deleted)** — see rate-limiting/bot-protection note below for the current per-form API routes.
+- **Admin notifications migrated to `hello@ramenhire.com` on 2026-07-07** (was `liork03@gmail.com`). **Mail delivery to `hello@` is not yet confirmed** — DNS shows an MX record pointing to `smtp.google.com` (consistent with Google Workspace being configured for the domain), but that only confirms mail routing exists for the domain, not that the specific `hello@` mailbox/alias has been provisioned inside Workspace. Confirm this receives mail before relying on it in production or promising it as a working contact channel anywhere (e.g. the Privacy Policy).
 
 ---
 
 ## 13. Outreach / Contacts Log
 
 - **Aryan Singh Yadav** (`hello@beryxa.com`) reached out unsolicited — appears to be a domain seller/consultant. User replied politely; no further action taken or needed. Logged here only so a future session doesn't mistake this for a real partnership lead or re-engage unnecessarily.
+- **Company model terminology (2026-07-07, confirmed permanent): self-registration only, never pre-populated/claim-based.** Any earlier "claim flow" / "claim_token" architecture was a rejected draft that never actually existed in the repo (see [[companies-feature]]) — do not resurrect it. Outreach copy does still casually use the word "claim" (e.g. "claim it with a free company profile") as ordinary marketing language for *creating* a registration — that's unrelated to the old pre-populate-and-claim database model and is not a sign the old model came back.
+- **Outreach emails rewritten (2026-07-07)** — `outreach/outreach-emails.txt` now uses a permission-ask-first structure: state the role is featured on the site, offer to remove it, then offer free self-registration via `https://www.ramenhire.com/companies/register`. This replaces the original draft's "we already listed you" framing, which was flagged as potentially misleading (implied an existing relationship these 13 companies don't actually have). **Ready to send as of 2026-07-07.** Known limitation: the job link in each email points to `https://www.ramenhire.com/#jobs` (homepage anchor), not a specific role — there's no individual job permalink page in the app yet, so this was the best real, working link available rather than an invented one.
+- **Top-of-funnel priority (as of 2026-07-07): attracting real registered companies comes before any job-seeker growth push** — the product has no real employer data yet (see [[employer-growth-strategy]] — zero real registrations as of this writing, all `companies` table testing to date used fake test data). **Next planned activity (2026-07-08):** manual outreach to the 13 companies via the rewritten emails above, plus a new parallel effort reaching out to HR contacts/hiring managers directly on LinkedIn to raise employer-side awareness of RamenHire (not candidate-side/job-seeker outreach).
 
 ---
 

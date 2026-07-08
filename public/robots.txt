@@ -3,7 +3,7 @@ User-agent: *
 Allow: /
 
 # Host
-Host: https://ramenhire.com
+Host: https://www.ramenhire.com
 
 # Sitemaps
-Sitemap: https://ramenhire.com/sitemap.xml
+Sitemap: https://www.ramenhire.com/sitemap.xml

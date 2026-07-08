@@ -1,0 +1,195 @@
+RAMENHIRE — COMPANIES TO CONTACT FOR JOB LISTINGS
+================================================
+Last updated: 2026-07-07
+Total companies: 13
+
+NOTE: These are real companies whose real, currently-open job posts were
+copied from other platforms onto RamenHire to seed the site during
+validation. None of them know they're listed and none has a relationship
+with RamenHire yet — outreach copy must not imply otherwise. Every email
+below was verified from the company's own site or a live job posting; where
+nothing could be verified, a contact-form URL is given instead of a guess.
+
+---
+
+1. AHA!
+   Website: https://www.aha.io
+   Open role on RamenHire: Senior Software Engineer
+   Contact email: not found (hiring-specific) — use contact form at
+   https://www.aha.io/company/contact (select the "Careers" subject; the
+   page promises a response within ~2 hours)
+   Notes: Large, established company ("thousands of applications every
+   month") — expect a generic support/HR inbox, not a founder. Co-founder
+   & CEO Brian de Haaff (@bdehaaff on X) publicly stepped away from
+   Twitter/X in 2023.
+
+---
+
+2. CLOSE CRM
+   Website: https://close.com
+   Open role on RamenHire: Multiple Roles
+   Contact email: talent@close.com — verified as a live mailto: link on
+   close.com/careers
+   Notes: Established remote-first company (since 2013) with an ATS at
+   jobs.ashbyhq.com/Close — expect routing to recruiting/people-ops.
+   CEO/co-founder Steli Efti is active on X (@steli) and has done multiple
+   Indie Hackers podcast appearances discussing Close's bootstrapped,
+   profitable growth — a possible warm secondary channel.
+
+---
+
+3. CO-VER
+   Website: https://co-ver.com
+   Open role on RamenHire: Senior Full-Stack Engineer
+   Contact email: admin@co-ver.com — verified on co-ver.com/contact.html
+   Notes: Our own DB's apply_url lists "recruiting@co-ver.com", but that
+   address could NOT be verified anywhere public — do not rely on it as
+   listed. Alternative: the "Get in Touch" form at co-ver.com. No founder
+   names found publicly; appears to be a very small/early-stage B2B SaaS
+   with no dedicated careers page.
+
+---
+
+4. FEATUREBASE
+   Website: https://featurebase.app
+   Open role on RamenHire: Full-Stack Product Engineer
+   Contact email: support@featurebase.app — verified in the site footer
+   and on the careers page (general inbox, but team is small enough that
+   founders likely see it)
+   Notes: Strongest warm-outreach candidate of all 13. Co-founder Bruno
+   Hiis is very actively posting on Indie Hackers
+   (indiehackers.com/BrunoHiis), publicly documenting Featurebase's
+   bootstrapped revenue growth. Team of 3, fully bootstrapped/profitable,
+   no investors. Company X: @FeaturebaseHQ.
+
+---
+
+5. GRUNTWORK
+   Website: https://gruntwork.io
+   Open role on RamenHire: Head of Product
+   Contact email: careers@gruntwork.io — verified verbatim on Gruntwork's
+   own hiring blog post (gruntwork.io/blog/how-we-hire-at-gruntwork)
+   Notes: Mid-sized distributed DevOps/infra company, not a tiny team.
+   Co-founders Yevgeniy "Jim" Brikman and Josh Padnick have LinkedIn/GitHub
+   presence but no confirmed Twitter/IH. careers@ is described as reviewed
+   by multiple team members, so it's a real, active channel.
+
+---
+
+6. GYMFLOW
+   Website: https://gymflow.io
+   Open role on RamenHire: Customer Onboarding & Support Specialist
+   Contact email: hello@gymflow.io — LOW-MEDIUM CONFIDENCE (found only in
+   a search-engine snippet, not confirmed by direct page fetch)
+   Notes: Recommend leading with the contact form at
+   https://gymflow.io/contact-us given the email is unverified. Founder &
+   CEO Isaac Buchanan has an active LinkedIn (previously CEO of Snap
+   Fitness UK). Very small team (9 people, founder-led, distributed across
+   Europe) — likely to reach the founder or core team directly.
+
+---
+
+7. KINSTA
+   Website: https://kinsta.com
+   Open roles on RamenHire: Account Manager (EMEA), Business Development
+   Representative (EMEA), Content Production Manager, Demand Generation
+   Specialist, Internal Tools Developer, Support Engineer
+   Contact email: not found — no email address is shown on their careers
+   or contact pages (only "contact via phone, email, or WhatsApp" language
+   with no address displayed)
+   Notes: Use the contact form at https://kinsta.com/contact-us/, or
+   https://kinsta.com/talk-to-sales/ if partnership framing fits better
+   than HR. Large, established managed-hosting company (founded 2013) with
+   a formal HR pipeline — expect a generic queue, not a founder.
+   Co-founder Mark Gavalda (now Chairman) has an X account (@MarkGavalda)
+   that appears inactive/unmonitored.
+
+---
+
+8. PAYHIP
+   Website: https://payhip.com
+   Open role on RamenHire: Growth Marketing Manager
+   Contact email: contact@payhip.com — verified on payhip.com/about
+   Notes: Very small, bootstrapped team (2 co-founders: Abs & Kahin
+   Farah). Co-founder Abs Farah is active on X (@absfarah). Role is
+   cross-posted on WeWorkRemotely/Wellfound. Ignore
+   payhip.com/percebenautics/careers — that's a customer's storefront
+   built on Payhip's platform, not Payhip's own careers page.
+
+---
+
+9. PLAUSIBLE ANALYTICS
+   Website: https://plausible.io
+   Open role on RamenHire: Technical Customer Success Manager
+   Contact email: jobs@plausible.io — verified verbatim on a live
+   Plausible job posting page; appears to be their standing hiring inbox
+   (general alternative: hello@plausible.io via plausible.io/contact)
+   Notes: Likely the warmest/easiest outreach of all 13 companies.
+   Co-founders Marko Saric and Uku Täht are very publicly active on Indie
+   Hackers (dedicated AMA/interview posts, official product page sharing
+   revenue milestones). Company X: @PlausibleHQ, also active. A direct
+   Indie Hackers reply/message could work as well as email.
+
+---
+
+10. RELEVANT HEALTHCARE
+    Website: https://relevant.healthcare
+    Open role on RamenHire: Full-Stack Engineer
+    Contact email: info@relevant.healthcare — found directly on site
+    (general inbox, not hiring-specific)
+    Notes: Alternative: demo/contact form at relevant.healthcare/#demo.
+    Careers page (relevant.healthcare/jobs) currently lists "Lead
+    Engineer"/"Software Engineer" — close to, but not an exact title
+    match for, our listing. CEO Brandon Hamilton has a public LinkedIn and
+    a possibly-active X (@BrandoHamilton, activity unverified). Larger/
+    established (90+ health centers, 10M+ patients served) — likely lands
+    in a general/HR inbox rather than reaching a founder.
+
+---
+
+11. SERPAPI
+    Website: https://serpapi.com
+    Open role on RamenHire: Multiple Engineering & Specialist Roles
+    Contact email: contact@serpapi.com — verified in the site footer
+    Notes: Has an extensive careers page (~29 open roles, published salary
+    + profit-share ranges) at serpapi.com/careers. Founder & CEO Julien
+    Khaleghy confirmed via LinkedIn; no personal Twitter/IH found, though
+    company X (@serp_api) is active. ~40 employees with a dedicated
+    hiring-coordinator role — expect a generic/HR-style pipeline, not the
+    founder directly.
+
+---
+
+12. TOGGL
+    Website: https://toggl.com
+    Open roles on RamenHire: Senior Backend Engineer, Senior Frontend
+    Engineer, Senior Product Manager
+    Contact email: not found — no hiring, recruiting, or general contact
+    email is published anywhere on their site (only product-support
+    addresses, which aren't appropriate for this outreach)
+    Notes: Use the partnerships contact form at
+    https://toggl.com/track/contact/ (its own page text states "For
+    partnerships requests only"). Larger, multi-product, established
+    Estonian company (Track, Plan, Hire) — expect a generalist/ops or
+    partnerships team, not a founder.
+
+---
+
+13. WRENLY
+    Website: https://wrenly.ai
+    Open role on RamenHire: Founding Customer Success Manager
+    Contact email: hi@wrenly.ai — found on wrenly.ai/about (general
+    small-team inbox)
+    Notes: Very small team (4 people, legal entity "Incognito Apps Inc."),
+    likely reaches a co-founder directly. Founders shown on the About page
+    as "Manish" and "Ali" — a third-party aggregator claimed different
+    names ("Matthew Brooks and Ali Khan") which conflicts with the site
+    and could not be confirmed, so disregard that claim. Company X:
+    @wrenly_ai. No dedicated careers page found.
+
+---
+
+End of list. Every email above was either directly quoted from the
+company's own site or a live job posting page — none were guessed or
+invented. Where confidence was low (Gymflow) or nothing could be verified
+(Aha!, Kinsta, Toggl), a contact-form URL is given instead.
