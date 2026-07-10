@@ -1,6 +1,19 @@
 const DASHBOARD_URL =
   "https://supabase.com/dashboard/project/oweurollqvbffehorhss/editor";
 
+// All user-supplied values must pass through this before landing in an HTML
+// string — every field below ultimately comes from a public form submission
+// (applicant, employer, or company registrant), and these templates render
+// as real HTML in whoever's inbox receives them (usually hello@ramenhire.com).
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function truncate(text: string, max = 300): string {
   return text.length > max ? text.slice(0, max) + "…" : text;
 }
@@ -70,23 +83,27 @@ export type JobPostData = {
 };
 
 export function jobPostTemplate(d: JobPostData): { subject: string; html: string } {
-  const subject = `🍜 New Job Post Request — ${d.company_name}`;
+  const companyName = escapeHtml(d.company_name);
+  const companyWebsite = d.company_website ? escapeHtml(d.company_website) : null;
+  const contactName = escapeHtml(d.contact_name);
+  const contactEmail = escapeHtml(d.contact_email);
+  const subject = `🍜 New Job Post Request — ${companyName}`;
   const table = `
     <table cellpadding="0" cellspacing="0" style="width:100%">
-      ${row("Company", d.company_name)}
-      ${row("Website", d.company_website ? `<a href="${d.company_website}" style="color:#C8501A">${d.company_website}</a>` : null)}
-      ${row("Contact", `${d.contact_name} — <a href="mailto:${d.contact_email}" style="color:#C8501A">${d.contact_email}</a>`)}
-      ${row("Job Title", d.job_title)}
-      ${row("Job Type", d.job_type)}
-      ${row("Location", d.location)}
-      ${row("Salary", d.salary_range)}
+      ${row("Company", companyName)}
+      ${row("Website", companyWebsite ? `<a href="${companyWebsite}" style="color:#C8501A">${companyWebsite}</a>` : null)}
+      ${row("Contact", `${contactName} — <a href="mailto:${contactEmail}" style="color:#C8501A">${contactEmail}</a>`)}
+      ${row("Job Title", escapeHtml(d.job_title))}
+      ${row("Job Type", escapeHtml(d.job_type))}
+      ${row("Location", escapeHtml(d.location))}
+      ${row("Salary", escapeHtml(d.salary_range))}
       ${row("Bootstrapped", d.is_bootstrapped ? "Yes ✓" : "No")}
-      ${row("Revenue", d.revenue_range ?? null)}
+      ${row("Revenue", d.revenue_range ? escapeHtml(d.revenue_range) : null)}
       ${row("Submitted", new Date(d.created_at).toLocaleString())}
     </table>
     <div style="margin-top:16px;padding:14px;background:#FAF9F7;border-radius:8px;border:1px solid #E5E0D8">
       <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:#6B6560;text-transform:uppercase;letter-spacing:.05em">Job Description</p>
-      <p style="margin:0;font-size:13px;color:#1A1A1A;line-height:1.6">${truncate(d.job_description)}</p>
+      <p style="margin:0;font-size:13px;color:#1A1A1A;line-height:1.6">${escapeHtml(truncate(d.job_description))}</p>
     </div>`;
   return { subject, html: wrap(subject, table) };
 }
@@ -106,19 +123,25 @@ export type ApplicationData = {
 };
 
 export function applicationTemplate(d: ApplicationData): { subject: string; html: string } {
-  const subject = `🍜 New Application — ${d.applicant_name} for ${d.job_title} at ${d.company_name}`;
+  const applicantName = escapeHtml(d.applicant_name);
+  const applicantEmail = escapeHtml(d.applicant_email);
+  const jobTitle = escapeHtml(d.job_title);
+  const companyName = escapeHtml(d.company_name);
+  const cvLink = d.cv_link ? escapeHtml(d.cv_link) : null;
+  const applyUrl = d.apply_url ? escapeHtml(d.apply_url) : null;
+  const subject = `🍜 New Application — ${applicantName} for ${jobTitle} at ${companyName}`;
   const table = `
     <table cellpadding="0" cellspacing="0" style="width:100%">
-      ${row("Applicant", `${d.applicant_name} — <a href="mailto:${d.applicant_email}" style="color:#C8501A">${d.applicant_email}</a>`)}
-      ${row("Job", `${d.job_title} at ${d.company_name}`)}
-      ${row("CV File", d.cv_file_name ?? null)}
-      ${row("CV Link", d.cv_link ? `<a href="${d.cv_link}" style="color:#C8501A">${d.cv_link}</a>` : null)}
-      ${row("Original Posting", d.apply_url ? `<a href="${d.apply_url}" style="color:#C8501A">${d.apply_url}</a>` : null)}
+      ${row("Applicant", `${applicantName} — <a href="mailto:${applicantEmail}" style="color:#C8501A">${applicantEmail}</a>`)}
+      ${row("Job", `${jobTitle} at ${companyName}`)}
+      ${row("CV File", d.cv_file_name ? escapeHtml(d.cv_file_name) : null)}
+      ${row("CV Link", cvLink ? `<a href="${cvLink}" style="color:#C8501A">${cvLink}</a>` : null)}
+      ${row("Original Posting", applyUrl ? `<a href="${applyUrl}" style="color:#C8501A">${applyUrl}</a>` : null)}
       ${row("Submitted", new Date(d.created_at).toLocaleString())}
     </table>
     <div style="margin-top:16px;padding:14px;background:#FAF9F7;border-radius:8px;border:1px solid #E5E0D8">
       <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:#6B6560;text-transform:uppercase;letter-spacing:.05em">Why Interested</p>
-      <p style="margin:0;font-size:13px;color:#1A1A1A;line-height:1.6">${truncate(d.why_interested)}</p>
+      <p style="margin:0;font-size:13px;color:#1A1A1A;line-height:1.6">${escapeHtml(truncate(d.why_interested))}</p>
     </div>`;
   return { subject, html: wrap(subject, table) };
 }
@@ -133,12 +156,14 @@ export type SubscriberData = {
 };
 
 export function subscriberTemplate(d: SubscriberData): { subject: string; html: string } {
-  const subject = `🍜 New Subscriber — ${d.full_name}`;
+  const fullName = escapeHtml(d.full_name);
+  const email = escapeHtml(d.email);
+  const subject = `🍜 New Subscriber — ${fullName}`;
   const table = `
     <table cellpadding="0" cellspacing="0" style="width:100%">
-      ${row("Name", d.full_name)}
-      ${row("Email", `<a href="mailto:${d.email}" style="color:#C8501A">${d.email}</a>`)}
-      ${row("Roles", d.role_types.length > 0 ? d.role_types.join(", ") : "Not specified")}
+      ${row("Name", fullName)}
+      ${row("Email", `<a href="mailto:${email}" style="color:#C8501A">${email}</a>`)}
+      ${row("Roles", d.role_types.length > 0 ? d.role_types.map(escapeHtml).join(", ") : "Not specified")}
       ${row("Subscribed", new Date(d.created_at).toLocaleString())}
     </table>`;
   return { subject, html: wrap(subject, table) };
@@ -162,23 +187,27 @@ export type CompanyRegistrationData = {
 export function companyRegistrationAdminTemplate(
   d: CompanyRegistrationData
 ): { subject: string; html: string } {
-  const subject = `🍜 New Company Registration — ${d.name}`;
+  const name = escapeHtml(d.name);
+  const website = escapeHtml(d.website);
+  const contactEmail = escapeHtml(d.contact_email);
+  const logoUrl = d.logo_url ? escapeHtml(d.logo_url) : null;
+  const subject = `🍜 New Company Registration — ${name}`;
   const table = `
     <table cellpadding="0" cellspacing="0" style="width:100%">
-      ${row("Company", d.name)}
-      ${row("Website", `<a href="${d.website}" style="color:#C8501A">${d.website}</a>`)}
-      ${row("Contact", `<a href="mailto:${d.contact_email}" style="color:#C8501A">${d.contact_email}</a>`)}
-      ${row("Team Size", d.team_size ?? null)}
-      ${row("Revenue", d.revenue_range ?? null)}
+      ${row("Company", name)}
+      ${row("Website", `<a href="${website}" style="color:#C8501A">${website}</a>`)}
+      ${row("Contact", `<a href="mailto:${contactEmail}" style="color:#C8501A">${contactEmail}</a>`)}
+      ${row("Team Size", d.team_size ? escapeHtml(d.team_size) : null)}
+      ${row("Revenue", d.revenue_range ? escapeHtml(d.revenue_range) : null)}
       ${row("Founded", d.founded_year ? String(d.founded_year) : null)}
-      ${row("Logo", d.logo_url ? `<a href="${d.logo_url}" style="color:#C8501A">View logo</a>` : "Not uploaded")}
+      ${row("Logo", logoUrl ? `<a href="${logoUrl}" style="color:#C8501A">View logo</a>` : "Not uploaded")}
       ${row("Submitted", new Date(d.created_at).toLocaleString())}
     </table>
     <div style="margin-top:16px;padding:14px;background:#FAF9F7;border-radius:8px;border:1px solid #E5E0D8">
       <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:#6B6560;text-transform:uppercase;letter-spacing:.05em">Description</p>
-      <p style="margin:0 0 12px;font-size:13px;color:#1A1A1A;line-height:1.6">${truncate(d.description)}</p>
+      <p style="margin:0 0 12px;font-size:13px;color:#1A1A1A;line-height:1.6">${escapeHtml(truncate(d.description))}</p>
       <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:#6B6560;text-transform:uppercase;letter-spacing:.05em">Why Work Here</p>
-      <p style="margin:0;font-size:13px;color:#1A1A1A;line-height:1.6">${truncate(d.why_work_here)}</p>
+      <p style="margin:0;font-size:13px;color:#1A1A1A;line-height:1.6">${escapeHtml(truncate(d.why_work_here))}</p>
     </div>`;
   return { subject, html: wrap(subject, table) };
 }
@@ -186,10 +215,11 @@ export function companyRegistrationAdminTemplate(
 export function companyRegistrationConfirmationTemplate(
   d: Pick<CompanyRegistrationData, "name">
 ): { subject: string; html: string } {
-  const subject = `🍜 We received your RamenHire profile — ${d.name}`;
+  const name = escapeHtml(d.name);
+  const subject = `🍜 We received your RamenHire profile — ${name}`;
   const body = `
     <p style="margin:0 0 12px;font-size:14px;color:#1A1A1A;line-height:1.6">
-      Thanks for registering <strong>${d.name}</strong> on RamenHire!
+      Thanks for registering <strong>${name}</strong> on RamenHire!
     </p>
     <p style="margin:0;font-size:14px;color:#1A1A1A;line-height:1.6">
       We're reviewing your profile now and will email you at this address once
@@ -209,14 +239,16 @@ export type CompanyVerificationData = {
 export function companyVerificationTemplate(
   d: CompanyVerificationData
 ): { subject: string; html: string } {
-  const subject = `🍜 Confirm your email to register ${d.name} on RamenHire`;
+  const name = escapeHtml(d.name);
+  const verifyUrl = escapeHtml(d.verify_url);
+  const subject = `🍜 Confirm your email to register ${name} on RamenHire`;
   const body = `
     <p style="margin:0 0 12px;font-size:14px;color:#1A1A1A;line-height:1.6">
-      Thanks for starting a RamenHire profile for <strong>${d.name}</strong>.
+      Thanks for starting a RamenHire profile for <strong>${name}</strong>.
       Confirm this is your email address to submit it for review:
     </p>
     <div style="margin:20px 0">
-      <a href="${d.verify_url}"
+      <a href="${verifyUrl}"
          style="display:inline-block;background:#C8501A;color:#FAF9F7;text-decoration:none;font-size:14px;font-weight:600;padding:12px 24px;border-radius:8px">
         Confirm your email →
       </a>

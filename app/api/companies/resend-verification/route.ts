@@ -2,11 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { sendCompanyConfirmation } from "@/lib/email";
 import { companyVerificationTemplate } from "@/lib/email-templates";
+import { checkRateLimit, getClientIp, RATE_LIMIT_MESSAGE } from "@/lib/rate-limit";
 import type { Company } from "@/lib/companies";
 
 const VERIFICATION_HOURS = 48;
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  const ip = getClientIp(req);
+
+  const allowed = await checkRateLimit(`resend-verification:${ip}`, 5, 60);
+  if (!allowed) {
+    return NextResponse.json({ error: "rate_limited", message: RATE_LIMIT_MESSAGE }, { status: 429 });
+  }
+
   let body: { token?: string };
   try {
     body = await req.json();

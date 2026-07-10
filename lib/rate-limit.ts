@@ -1,7 +1,16 @@
 import { NextRequest } from "next/server";
 import { supabaseAdmin } from "./supabase-admin";
 
+// x-vercel-forwarded-for is preferred: per Vercel's docs it's identical to
+// x-forwarded-for in the normal case, but stays correct if this app is ever
+// put behind another proxy (e.g. Cloudflare) in front of Vercel — a scenario
+// where x-forwarded-for could be overwritten by that intermediate layer.
+// x-forwarded-for itself is still safe to fall back to on Vercel today:
+// Vercel's edge overwrites it and explicitly refuses to forward
+// client-supplied values, specifically to prevent IP spoofing.
 export function getClientIp(req: NextRequest): string {
+  const vercelForwardedFor = req.headers.get("x-vercel-forwarded-for");
+  if (vercelForwardedFor) return vercelForwardedFor.split(",")[0].trim();
   const forwardedFor = req.headers.get("x-forwarded-for");
   if (forwardedFor) return forwardedFor.split(",")[0].trim();
   return req.headers.get("x-real-ip") ?? "unknown";

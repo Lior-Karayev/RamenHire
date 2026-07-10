@@ -155,6 +155,7 @@ export default function RegisterClient() {
           founded_year: form.founded_year ? Number(form.founded_year) : null,
           contact_email: form.contact_email,
           turnstile_token: turnstileToken,
+          honeypot,
         }),
       });
 

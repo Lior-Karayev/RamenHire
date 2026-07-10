@@ -20,6 +20,7 @@ type RegisterBody = {
   founded_year: number | null;
   contact_email: string;
   turnstile_token: string;
+  honeypot?: string;
 };
 
 async function insertCompany(
@@ -63,6 +64,17 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "invalid_json", message: "Something went wrong. Please try again." }, { status: 400 });
+  }
+
+  // Honeypot: real users never see or fill this field (hidden off-screen in
+  // the form), so a filled value means a bot that scraped and submitted every
+  // input it found — including ones a browser user never would. Mirrors the
+  // client-side check in RegisterClient.tsx, but enforced here too since a
+  // scripted request can skip the browser (and that client-side check)
+  // entirely. Silently "succeeds" rather than erroring, same as the client,
+  // so as not to tip off the bot that it was caught.
+  if (body.honeypot && body.honeypot.trim() !== "") {
+    return NextResponse.json({ ok: true });
   }
 
   const verified = await verifyTurnstile(body.turnstile_token, ip);
