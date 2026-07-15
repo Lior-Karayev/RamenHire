@@ -34,7 +34,7 @@ export default function PrivacyPolicyPage() {
           Privacy Policy
         </h1>
         <p className="text-sm mb-10" style={{ color: "#9B9690" }}>
-          Last updated: July 7, 2026
+          Last updated: July 15, 2026
         </p>
 
         <p className={P} style={{ color: "#6B6560" }}>
@@ -52,8 +52,9 @@ export default function PrivacyPolicyPage() {
 
         <h2 className={H2}>1. What we collect</h2>
         <p className={P} style={{ color: "#6B6560" }}>
-          We only collect what you actively submit through a form. There is no account system,
-          no login, and no passive tracking beyond the analytics cookies described in Section 5.
+          Beyond what you actively submit through a form, the only other data collected is the
+          anonymous, aggregate site-analytics traffic described below and in Section 5. There is no
+          account system and no login.
         </p>
 
         <h3 className={H3}>Job seekers (applying to a job)</h3>
@@ -94,9 +95,12 @@ export default function PrivacyPolicyPage() {
 
         <h3 className={H3}>Everyone (site visitors)</h3>
         <p className={P} style={{ color: "#6B6560" }}>
-          If you accept cookies, Google Analytics 4 collects page views, the interactions listed in
-          Section 5, and standard technical data (browser, device type, approximate location derived
-          from IP). See Section 5 for full detail — this only happens if you accept.
+          If you accept cookies, Google Analytics 4 additionally collects page views, the
+          interactions listed in Section 5, and standard technical data (browser, device type,
+          approximate location derived from IP) — this only happens if you accept. Separately,
+          GoatCounter, Vercel Web Analytics, and Vercel Speed Insights each record an anonymous
+          pageview for every visitor regardless of that choice, since none of them set a cookie or
+          need consent to do so — see Section 5 for the full explanation of that distinction.
         </p>
 
         <h2 className={H2}>2. Why we collect it &amp; legal basis</h2>
@@ -129,6 +133,31 @@ export default function PrivacyPolicyPage() {
           <li><strong>Supabase</strong> — database and file storage hosting (Section 3).</li>
           <li><strong>Vercel</strong> — hosts and serves the website; sees standard request/connection data as part of serving any web page.</li>
           <li>
+            <strong>GoatCounter</strong>{" "}— cookieless site analytics that runs for every visitor
+            regardless of your cookie choice (see Section 5 for why). Per GoatCounter&apos;s own
+            documentation, it does not store IP addresses — an incoming IP is used only momentarily
+            to derive a country-level location, then discarded, and no cookie, localStorage, or
+            other browser storage is used. Each pageview it records includes browser/OS, screen
+            width, language, referrer, and the page path.
+          </li>
+          <li>
+            <strong>Vercel Web Analytics</strong>{" "}— cookieless traffic analytics, also unaffected by
+            your cookie choice (Section 5). Per Vercel&apos;s own documentation, visitors are
+            identified only by a hash derived from the incoming request, not by IP address or any
+            cookie; that hash is discarded after 24 hours rather than kept as a persistent
+            identifier. Each data point includes the page URL, referrer, country/region-level
+            location, and device/browser/OS type — none of it tied to an individual visitor.
+          </li>
+          <li>
+            <strong>Vercel Speed Insights</strong>{" "}— cookieless page-load performance measurement
+            (e.g. how fast pages render for real visitors), also unaffected by your cookie choice
+            (Section 5). Per Vercel&apos;s own documentation for this specific product, recording is
+            anonymous and not tied to, or able to reconstruct, an individual visitor&apos;s browsing
+            session, and it sets no cookie. Each data point includes the page route, network speed,
+            device/browser/OS type, country, and page-load performance metrics (e.g. how fast the
+            page rendered).
+          </li>
+          <li>
             <strong>Resend</strong> — sends transactional emails on our behalf: your submission
             details are included in the notification email we receive, and (for company
             registrations) a confirmation email is sent back to the address you provided.
@@ -154,6 +183,24 @@ export default function PrivacyPolicyPage() {
           on your first visit. If you decline, no analytics cookie is set at all — this isn&apos;t
           just a preference toggle after the fact, the underlying analytics script itself is not
           loaded until you accept.
+        </p>
+        <p className={P} style={{ color: "#6B6560" }}>
+          <strong>GoatCounter, Vercel Web Analytics, and Vercel Speed Insights are the exception</strong>{" "}
+          — they run on every page view regardless of the choice you make above, and that&apos;s
+          intentional, not an oversight or a workaround of your decision. The cookie banner governs
+          cookies specifically, and none of these tools sets one: no cookie, no localStorage, no
+          identifier saved to your browser at all — so there is genuinely no non-essential cookie to
+          ask permission for. What they do instead is send a single, anonymous record of that page
+          view directly to their own servers the moment the page loads, before you&apos;ve made any
+          cookie choice — a real network request you can see for yourself in your browser&apos;s
+          network tab. That&apos;s the &quot;processes a pageview&quot; side of privacy law, not the
+          &quot;sets a cookie&quot; side; the consent requirement in this section is specifically
+          about the latter. Concretely: GoatCounter discards the IP address it briefly sees after
+          deriving a country-level location from it; Vercel Web Analytics identifies visitors only
+          via a hash that&apos;s discarded after 24 hours rather than kept as a persistent
+          identifier; and Vercel Speed Insights doesn&apos;t identify individual visitors at all —
+          its recordings are anonymous by design. None of the three can link a page view back to you
+          on a future visit or across other sites.
         </p>
         <p className={P} style={{ color: "#6B6560" }}>
           If you accept, Google Analytics 4 sets two cookies:
