@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { companyMatchesJob, TEAM_SIZE_OPTIONS, REVENUE_OPTIONS, type Company } from "@/lib/companies";
 import type { JobListing } from "@/app/HomeClient";
 import SiteFooter from "@/components/SiteFooter";
+import { buildPageMetadata } from "@/lib/metadata";
 
 export const revalidate = 60;
 
@@ -42,25 +43,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const company = await getCompany(slug);
   if (!company) return {};
 
-  const title = company.name;
   const description = truncate(company.description);
-  const url = `https://www.ramenhire.com/companies/${company.slug}`;
 
-  return {
-    title,
+  return buildPageMetadata({
+    title: company.name,
     description,
-    alternates: { canonical: url },
-    openGraph: {
-      title: `${company.name} | RamenHire`,
-      description,
-      url,
-      ...(company.logo_url ? { images: [{ url: company.logo_url }] } : {}),
-    },
-    twitter: {
-      title: `${company.name} | RamenHire`,
-      description,
-    },
-  };
+    path: `/companies/${company.slug}`,
+    ogTitle: `${company.name} | RamenHire`,
+    image: company.logo_url ?? undefined,
+  });
 }
 
 export default async function CompanyProfilePage({ params }: Props) {

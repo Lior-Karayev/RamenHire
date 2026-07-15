@@ -504,24 +504,17 @@ export default function PostJobClient() {
               <button
                 type="submit"
                 disabled={status === "loading"}
-                className="w-full py-3.5 rounded-lg text-sm font-medium flex flex-col items-center justify-center gap-0.5 transition-colors"
+                className="w-full py-3.5 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors"
                 style={{
                   backgroundColor: status === "loading" ? "#D4845A" : "#C8501A",
                   color: "#FAF9F7",
                   cursor: status === "loading" ? "not-allowed" : "pointer",
                 }}
               >
-                <span className="flex items-center gap-2">
-                  {status === "loading" && (
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  )}
-                  {status === "loading" ? "Submitting…" : "Submit Listing — Free 🍜"}
-                </span>
-                {status !== "loading" && (
-                  <span className="text-xs font-normal" style={{ color: "rgba(255,255,255,0.65)", textDecoration: "line-through" }}>
-                    $99 value
-                  </span>
+                {status === "loading" && (
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 )}
+                {status === "loading" ? "Submitting…" : "Submit Listing — Free 🍜"}
               </button>
             </form>
           </>

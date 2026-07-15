@@ -1,25 +1,13 @@
 import type { Metadata } from "next";
 import SiteFooter from "@/components/SiteFooter";
+import { buildPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title: "Terms of Use",
   description:
     "The terms governing use of RamenHire — for job seekers browsing listings and companies posting jobs or registering a profile.",
-  alternates: {
-    canonical: "https://www.ramenhire.com/terms-of-use",
-  },
-  openGraph: {
-    title: "Terms of Use | RamenHire",
-    description:
-      "The terms governing use of RamenHire — for job seekers browsing listings and companies posting jobs or registering a profile.",
-    url: "https://www.ramenhire.com/terms-of-use",
-  },
-  twitter: {
-    title: "Terms of Use | RamenHire",
-    description:
-      "The terms governing use of RamenHire — for job seekers browsing listings and companies posting jobs or registering a profile.",
-  },
-};
+  path: "/terms-of-use",
+});
 
 const H2 = "text-xl font-semibold mt-10 mb-3";
 const P = "text-sm leading-relaxed mb-3";

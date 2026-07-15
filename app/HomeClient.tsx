@@ -776,7 +776,7 @@ export default function HomeClient({ jobs, totalCount, companies }: Props) {
             </a>
             <a
               href={POST_JOB_URL}
-              className="inline-flex flex-col items-center px-5 py-2.5 rounded-lg border text-sm font-medium transition-colors leading-tight"
+              className="inline-flex items-center px-5 py-2.5 rounded-lg border text-sm font-medium transition-colors"
               style={{ backgroundColor: "transparent", color: "#1A1A1A", borderColor: "#E5E0D8" }}
               onMouseEnter={(e) => {
                 (e.currentTarget as HTMLAnchorElement).style.borderColor = "#C8501A";
@@ -788,12 +788,12 @@ export default function HomeClient({ jobs, totalCount, companies }: Props) {
               }}
               onClick={() => trackEvent("post_job_click")}
             >
-              <span>Post a Job — Free 🍜</span>
-              <span className="text-xs font-normal" style={{ color: "#9CA3AF", textDecoration: "line-through" }}>
-                $99
-              </span>
+              Post a Job — It&apos;s Free 🍜
             </a>
           </div>
+          <p className="text-xs mt-3" style={{ color: "#9CA3AF" }}>
+            <s>$99</s> Free during early access
+          </p>
         </div>
       </section>
 

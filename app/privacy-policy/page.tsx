@@ -1,26 +1,14 @@
 import type { Metadata } from "next";
 import SiteFooter from "@/components/SiteFooter";
 import { CookieSettingsLink } from "@/components/CookieConsentBanner";
+import { buildPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title: "Privacy Policy",
   description:
     "How RamenHire collects, stores, and shares data — what's actually done with job applications, company registrations, and site analytics.",
-  alternates: {
-    canonical: "https://www.ramenhire.com/privacy-policy",
-  },
-  openGraph: {
-    title: "Privacy Policy | RamenHire",
-    description:
-      "How RamenHire collects, stores, and shares data — what's actually done with job applications, company registrations, and site analytics.",
-    url: "https://www.ramenhire.com/privacy-policy",
-  },
-  twitter: {
-    title: "Privacy Policy | RamenHire",
-    description:
-      "How RamenHire collects, stores, and shares data — what's actually done with job applications, company registrations, and site analytics.",
-  },
-};
+  path: "/privacy-policy",
+});
 
 const H2 = "text-xl font-semibold mt-10 mb-3";
 const H3 = "text-base font-semibold mt-6 mb-2";

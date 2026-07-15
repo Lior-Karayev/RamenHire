@@ -2,28 +2,16 @@ import type { Metadata } from "next";
 import { supabase } from "@/lib/supabase";
 import type { Company } from "@/lib/companies";
 import SiteFooter from "@/components/SiteFooter";
+import { buildPageMetadata } from "@/lib/metadata";
 
 export const revalidate = 60;
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title: "Companies Hiring at Bootstrapped Startups",
   description:
     "Browse bootstrapped, profitable companies hiring on RamenHire. Verified, self-funded startups building without VC pressure.",
-  alternates: {
-    canonical: "https://www.ramenhire.com/companies",
-  },
-  openGraph: {
-    title: "Companies Hiring at Bootstrapped Startups | RamenHire",
-    description:
-      "Browse bootstrapped, profitable companies hiring on RamenHire. Verified, self-funded startups building without VC pressure.",
-    url: "https://www.ramenhire.com/companies",
-  },
-  twitter: {
-    title: "Companies Hiring at Bootstrapped Startups | RamenHire",
-    description:
-      "Browse bootstrapped, profitable companies hiring on RamenHire. Verified, self-funded startups building without VC pressure.",
-  },
-};
+  path: "/companies",
+});
 
 export default async function CompaniesPage() {
   let companies: Company[] = [];
