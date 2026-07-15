@@ -39,6 +39,9 @@ export default function SiteFooter() {
         <a href="/terms-of-use" className="transition-colors hover:underline">
           Terms of Use
         </a>
+        <a href="/contact" className="transition-colors hover:underline">
+          Contact
+        </a>
         <button
           type="button"
           onClick={openCookieSettings}

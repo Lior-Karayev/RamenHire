@@ -260,3 +260,32 @@ export function companyVerificationTemplate(
     </p>`;
   return { subject, html: wrapPublic(subject, body) };
 }
+
+// ── Contact Message ──────────────────────────────────────────
+
+export type ContactMessageData = {
+  name: string;
+  email: string;
+  reason?: string | null;
+  message: string;
+  created_at: string;
+};
+
+export function contactMessageTemplate(d: ContactMessageData): { subject: string; html: string } {
+  const name = escapeHtml(d.name);
+  const email = escapeHtml(d.email);
+  const reason = d.reason ? escapeHtml(d.reason) : null;
+  const subject = `🍜 New Contact Message — ${name}`;
+  const table = `
+    <table cellpadding="0" cellspacing="0" style="width:100%">
+      ${row("Name", name)}
+      ${row("Email", `<a href="mailto:${email}" style="color:#C8501A">${email}</a>`)}
+      ${row("Reason", reason)}
+      ${row("Submitted", new Date(d.created_at).toLocaleString())}
+    </table>
+    <div style="margin-top:16px;padding:14px;background:#FAF9F7;border-radius:8px;border:1px solid #E5E0D8">
+      <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:#6B6560;text-transform:uppercase;letter-spacing:.05em">Message</p>
+      <p style="margin:0;font-size:13px;color:#1A1A1A;line-height:1.6">${escapeHtml(truncate(d.message))}</p>
+    </div>`;
+  return { subject, html: wrap(subject, table) };
+}
