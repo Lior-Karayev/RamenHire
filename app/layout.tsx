@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import Script from "next/script";
+import { Analytics } from "@vercel/analytics/next";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
 import "./globals.css";
 
@@ -95,6 +97,15 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+        {/* Cookieless, consent-independent traffic baselines — set no cookies,
+            so unlike GA4 (gated behind CookieConsentBanner) these load for
+            every visitor regardless of the cookie consent choice. */}
+        <Script
+          data-goatcounter="https://ramenhire.goatcounter.com/count"
+          src="https://gc.zgo.at/count.js"
+          strategy="afterInteractive"
+        />
+        <Analytics />
         {children}
         <CookieConsentBanner />
       </body>
