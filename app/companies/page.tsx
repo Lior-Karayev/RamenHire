@@ -3,6 +3,8 @@ import { supabase } from "@/lib/supabase";
 import type { Company } from "@/lib/companies";
 import SiteFooter from "@/components/SiteFooter";
 
+export const revalidate = 60;
+
 export const metadata: Metadata = {
   title: "Companies Hiring at Bootstrapped Startups",
   description:

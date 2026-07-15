@@ -5,6 +5,8 @@ import { companyMatchesJob, TEAM_SIZE_OPTIONS, REVENUE_OPTIONS, type Company } f
 import type { JobListing } from "@/app/HomeClient";
 import SiteFooter from "@/components/SiteFooter";
 
+export const revalidate = 60;
+
 type Props = {
   params: Promise<{ slug: string }>;
 };

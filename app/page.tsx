@@ -2,6 +2,8 @@ import { supabase } from "@/lib/supabase";
 import HomeClient, { type JobListing } from "./HomeClient";
 import type { Company } from "@/lib/companies";
 
+export const revalidate = 60;
+
 function buildJobPostingSchema(job: JobListing) {
   return {
     "@context": "https://schema.org",
