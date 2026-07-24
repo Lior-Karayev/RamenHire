@@ -1,0 +1,13 @@
+-- ── Company-auth sprint (2026-07-21), Step D1 ──────────────────
+-- job_listings' original migration (20260705000003) never granted
+-- service_role anything on this table — confirmed via
+-- information_schema.role_table_grants (service_role had only
+-- REFERENCES/TRIGGER/TRUNCATE, no SELECT/INSERT/UPDATE/DELETE). The new
+-- self-service create route (/api/companies/job-listings) needs SELECT +
+-- INSERT to publish a company's own listing via the service-role client.
+--
+-- Granting only what this step needs, not the full CRUD set — UPDATE/DELETE
+-- are added in the Step D2 migration when self-service edit/delete ship,
+-- per this sprint's "update RLS/grants incrementally as each piece is built"
+-- discipline (sprint scope section 10).
+GRANT SELECT, INSERT ON public.job_listings TO service_role;

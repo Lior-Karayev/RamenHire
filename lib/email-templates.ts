@@ -65,50 +65,8 @@ function wrapBase(title: string, body: string, footer: string): string {
 </html>`.trim();
 }
 
-// ── Job Post Request ─────────────────────────────────────────
 
-export type JobPostData = {
-  company_name: string;
-  company_website?: string | null;
-  contact_name: string;
-  contact_email: string;
-  job_title: string;
-  job_type: string;
-  location: string;
-  salary_range: string;
-  is_bootstrapped: boolean;
-  revenue_range?: string | null;
-  job_description: string;
-  created_at: string;
-};
-
-export function jobPostTemplate(d: JobPostData): { subject: string; html: string } {
-  const companyName = escapeHtml(d.company_name);
-  const companyWebsite = d.company_website ? escapeHtml(d.company_website) : null;
-  const contactName = escapeHtml(d.contact_name);
-  const contactEmail = escapeHtml(d.contact_email);
-  const subject = `🍜 New Job Post Request — ${companyName}`;
-  const table = `
-    <table cellpadding="0" cellspacing="0" style="width:100%">
-      ${row("Company", companyName)}
-      ${row("Website", companyWebsite ? `<a href="${companyWebsite}" style="color:#C8501A">${companyWebsite}</a>` : null)}
-      ${row("Contact", `${contactName} — <a href="mailto:${contactEmail}" style="color:#C8501A">${contactEmail}</a>`)}
-      ${row("Job Title", escapeHtml(d.job_title))}
-      ${row("Job Type", escapeHtml(d.job_type))}
-      ${row("Location", escapeHtml(d.location))}
-      ${row("Salary", escapeHtml(d.salary_range))}
-      ${row("Bootstrapped", d.is_bootstrapped ? "Yes ✓" : "No")}
-      ${row("Revenue", d.revenue_range ? escapeHtml(d.revenue_range) : null)}
-      ${row("Submitted", new Date(d.created_at).toLocaleString())}
-    </table>
-    <div style="margin-top:16px;padding:14px;background:#FAF9F7;border-radius:8px;border:1px solid #E5E0D8">
-      <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:#6B6560;text-transform:uppercase;letter-spacing:.05em">Job Description</p>
-      <p style="margin:0;font-size:13px;color:#1A1A1A;line-height:1.6">${escapeHtml(truncate(d.job_description))}</p>
-    </div>`;
-  return { subject, html: wrap(subject, table) };
-}
-
-// ── Application ──────────────────────────────────────────────
+// -- Application ----------------------------------------------
 
 export type ApplicationData = {
   applicant_name: string;
@@ -146,7 +104,7 @@ export function applicationTemplate(d: ApplicationData): { subject: string; html
   return { subject, html: wrap(subject, table) };
 }
 
-// ── Subscriber ───────────────────────────────────────────────
+// -- Subscriber -----------------------------------------------
 
 export type SubscriberData = {
   full_name: string;
@@ -169,7 +127,7 @@ export function subscriberTemplate(d: SubscriberData): { subject: string; html: 
   return { subject, html: wrap(subject, table) };
 }
 
-// ── Company Registration ────────────────────────────────────
+// -- Company Registration ------------------------------------
 
 export type CompanyRegistrationData = {
   name: string;
@@ -229,7 +187,7 @@ export function companyRegistrationConfirmationTemplate(
   return { subject, html: wrapPublic(subject, body) };
 }
 
-// ── Company Email Verification ──────────────────────────────
+// -- Company Email Verification ------------------------------
 
 export type CompanyVerificationData = {
   name: string;
@@ -261,7 +219,7 @@ export function companyVerificationTemplate(
   return { subject, html: wrapPublic(subject, body) };
 }
 
-// ── Contact Message ──────────────────────────────────────────
+// -- Contact Message ------------------------------------------
 
 export type ContactMessageData = {
   name: string;

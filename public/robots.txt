@@ -4,6 +4,3 @@ Allow: /
 
 # Host
 Host: https://www.ramenhire.com
-
-# Sitemaps
-Sitemap: https://www.ramenhire.com/sitemap.xml

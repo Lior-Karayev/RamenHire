@@ -6,8 +6,11 @@ import {
   companyRegistrationConfirmationTemplate,
 } from "@/lib/email-templates";
 import SiteFooter from "@/components/SiteFooter";
+import Header from "@/components/Header";
 import ResendVerificationButton from "@/components/ResendVerificationButton";
 import type { Company } from "@/lib/companies";
+import { getCurrentUser } from "@/lib/auth";
+import { getPostJobCta } from "@/lib/postJobCta";
 
 export const metadata: Metadata = {
   title: "Confirm Your Email",
@@ -77,6 +80,8 @@ async function processVerification(token: string | undefined): Promise<Outcome> 
 export default async function VerifyCompanyPage({ searchParams }: Props) {
   const { token } = await searchParams;
   const outcome = await processVerification(token);
+  const user = await getCurrentUser();
+  const postJobCta = await getPostJobCta(user);
 
   let heading: string;
   let body: React.ReactNode;
@@ -112,16 +117,7 @@ export default async function VerifyCompanyPage({ searchParams }: Props) {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#FAF9F7", color: "#1A1A1A" }}>
-      <nav
-        className="sticky top-0 z-40 border-b"
-        style={{ backgroundColor: "#FAF9F7", borderColor: "#E5E0D8" }}
-      >
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center">
-          <a href="/" className="text-lg font-semibold tracking-tight" style={{ color: "#1A1A1A" }}>
-            Ramen<span style={{ color: "#C8501A" }}>Hire</span>
-          </a>
-        </div>
-      </nav>
+      <Header user={user} postJobCta={postJobCta} />
 
       <main className="max-w-2xl mx-auto px-6 py-20 text-center">
         <p className="text-5xl mb-6">🍜</p>

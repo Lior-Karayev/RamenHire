@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import ContactClient from "./ContactClient";
 import { buildPageMetadata } from "@/lib/metadata";
+import { getCurrentUser } from "@/lib/auth";
+import { getPostJobCta } from "@/lib/postJobCta";
 
 export const metadata: Metadata = buildPageMetadata({
   title: "Contact",
@@ -9,6 +11,8 @@ export const metadata: Metadata = buildPageMetadata({
   path: "/contact",
 });
 
-export default function ContactPage() {
-  return <ContactClient />;
+export default async function ContactPage() {
+  const user = await getCurrentUser();
+  const postJobCta = await getPostJobCta(user);
+  return <ContactClient user={user} postJobCta={postJobCta} />;
 }

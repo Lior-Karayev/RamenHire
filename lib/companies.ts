@@ -20,6 +20,9 @@ export type Company = {
   email_verified_at: string | null;
   created_at: string;
   updated_at: string;
+  auth_user_id: string | null;
+  is_admin: boolean;
+  deleted_at: string | null;
 };
 
 export function slugify(str: string): string {

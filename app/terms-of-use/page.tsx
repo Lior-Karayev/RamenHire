@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import SiteFooter from "@/components/SiteFooter";
+import Header from "@/components/Header";
 import { buildPageMetadata } from "@/lib/metadata";
+import { getCurrentUser } from "@/lib/auth";
+import { getPostJobCta } from "@/lib/postJobCta";
 
 export const metadata: Metadata = buildPageMetadata({
   title: "Terms of Use",
@@ -13,26 +16,19 @@ const H2 = "text-xl font-semibold mt-10 mb-3";
 const P = "text-sm leading-relaxed mb-3";
 const UL = "text-sm leading-relaxed mb-3 list-disc pl-5 flex flex-col gap-1.5";
 
-export default function TermsOfUsePage() {
+export default async function TermsOfUsePage() {
+  const user = await getCurrentUser();
+  const postJobCta = await getPostJobCta(user);
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#FAF9F7", color: "#1A1A1A" }}>
-      <nav
-        className="sticky top-0 z-40 border-b"
-        style={{ backgroundColor: "#FAF9F7", borderColor: "#E5E0D8" }}
-      >
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center">
-          <a href="/" className="text-lg font-semibold tracking-tight" style={{ color: "#1A1A1A" }}>
-            Ramen<span style={{ color: "#C8501A" }}>Hire</span>
-          </a>
-        </div>
-      </nav>
+      <Header user={user} postJobCta={postJobCta} />
 
       <main className="max-w-3xl mx-auto px-6 py-16">
         <h1 className="text-3xl font-semibold mb-2" style={{ color: "#1A1A1A" }}>
           Terms of Use
         </h1>
         <p className="text-sm mb-10" style={{ color: "#9B9690" }}>
-          Last updated: July 7, 2026
+          Last updated: July 21, 2026
         </p>
 
         <p className={P} style={{ color: "#6B6560" }}>
@@ -51,18 +47,31 @@ export default function TermsOfUsePage() {
           company.
         </p>
 
-        <h2 className={H2}>2. Company registration &amp; job listings</h2>
+        <h2 className={H2}>2. Company accounts, registration &amp; job listings</h2>
         <p className={P} style={{ color: "#6B6560" }}>
-          Companies submitting a job post or registering a company profile represent that the
-          information provided is accurate and that they have the authority to submit it on the
-          company&apos;s behalf. All submissions are reviewed manually before being published —
-          submitting a form does not guarantee publication. We may reject, edit for clarity, or
-          remove any submission at our discretion, including after it has been published.
+          Registering creates a real account, secured by the email and password you provide.
+          You&apos;re responsible for keeping your login credentials confidential and for all
+          activity under your account; tell us at <strong>hello@ramenhire.com</strong> if you
+          believe your account has been accessed without your authorization.
         </p>
         <p className={P} style={{ color: "#6B6560" }}>
-          There is no user account system — submissions are tied to the email address provided,
-          not to a login. Keep that email address accurate if you want to be able to manage or
-          request removal of your listing later.
+          Companies registering a profile represent that the information provided is accurate and
+          that they have the authority to submit it on the company&apos;s behalf. Every new company
+          registration is reviewed manually before it goes live — creating an account does not by
+          itself guarantee your profile is published, and does not guarantee any individual job
+          listing you later post will be approved, edited, or kept live.{" "}
+          <strong>Once your company profile has been approved, you may publish, edit, and remove
+          your own job listings yourself, without waiting on manual review of each individual
+          listing</strong> — we may still reject, edit for clarity, or remove any listing (or your
+          account entirely) at our discretion, including after it&apos;s been published, per
+          Section 7.
+        </p>
+        <p className={P} style={{ color: "#6B6560" }}>
+          You may edit your own listings, and manage or request deletion of your own account,
+          directly through your account&apos;s self-service tools at any time — see the Privacy
+          Policy (Sections 6–7) for how deletion requests and their retention windows work. Keep
+          your account&apos;s contact email accurate if you want to be reachable about your listing
+          or account.
         </p>
 
         <h2 className={H2}>3. Acceptable use</h2>
@@ -121,10 +130,15 @@ export default function TermsOfUsePage() {
 
         <h2 className={H2}>7. Termination</h2>
         <p className={P} style={{ color: "#6B6560" }}>
-          We may reject, suspend, or remove any job listing, company profile, or submission — and
-          refuse future submissions from a given company or individual — at our discretion, at any
-          time, including without prior notice, for example if we believe these terms have been
-          violated.
+          We may reject, suspend, or remove any job listing, company profile, submission, or
+          account — and refuse future submissions or registrations from a given company or
+          individual — at our discretion, at any time, including without prior notice, for example
+          if we believe these terms have been violated.
+        </p>
+        <p className={P} style={{ color: "#6B6560" }}>
+          You may also request deletion of your own account and listings at any time (Section 2) —
+          see the Privacy Policy for the retention windows that apply before that removal is
+          permanent.
         </p>
 
         <h2 className={H2}>8. Governing law</h2>

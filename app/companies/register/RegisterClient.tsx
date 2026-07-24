@@ -1,11 +1,15 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { TEAM_SIZE_OPTIONS, REVENUE_OPTIONS } from "@/lib/companies";
 import SiteFooter from "@/components/SiteFooter";
+import Header from "@/components/Header";
 import { trackEvent } from "@/lib/analytics";
 import TurnstileWidget from "@/components/TurnstileWidget";
+import type { CurrentUser } from "@/lib/auth";
+import type { PostJobCta } from "@/lib/postJobCta";
 
 type FormData = {
   name: string;
@@ -16,6 +20,7 @@ type FormData = {
   revenue_range: string;
   founded_year: string;
   contact_email: string;
+  password: string;
 };
 
 const INITIAL: FormData = {
@@ -27,6 +32,7 @@ const INITIAL: FormData = {
   revenue_range: "",
   founded_year: "",
   contact_email: "",
+  password: "",
 };
 
 type Status = "idle" | "loading" | "success" | "error";
@@ -60,7 +66,13 @@ function validateLogo(file: File): string {
   return "";
 }
 
-export default function RegisterClient() {
+type Props = {
+  user: CurrentUser | null;
+  postJobCta: PostJobCta;
+};
+
+export default function RegisterClient({ user, postJobCta }: Props) {
+  const router = useRouter();
   const [form, setForm] = useState<FormData>(INITIAL);
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState("");
@@ -70,6 +82,28 @@ export default function RegisterClient() {
   const [honeypot, setHoneypot] = useState("");
   const [turnstileToken, setTurnstileToken] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Real browser-history back rather than a fixed destination, so this
+  // returns wherever the visitor actually came from (homepage, header CTA,
+  // etc.) instead of always landing on /companies. Checking document.referrer
+  // (rather than window.history.length) is what actually distinguishes "came
+  // from another page on this site" from "landed directly" — history.length
+  // is unreliable here since a brand-new tab still carries its own "New Tab"
+  // placeholder entry, so even a bookmarked/shared direct link can leave
+  // history.length > 1 and send router.back() to that placeholder instead of
+  // anywhere useful.
+  function handleBack() {
+    const sameOriginReferrer =
+      typeof document !== "undefined" &&
+      document.referrer &&
+      new URL(document.referrer).origin === window.location.origin;
+
+    if (sameOriginReferrer) {
+      router.back();
+    } else {
+      router.push("/");
+    }
+  }
 
   function field(key: keyof FormData) {
     return (
@@ -154,6 +188,7 @@ export default function RegisterClient() {
           revenue_range: form.revenue_range || null,
           founded_year: form.founded_year ? Number(form.founded_year) : null,
           contact_email: form.contact_email,
+          password: form.password,
           turnstile_token: turnstileToken,
           honeypot,
         }),
@@ -184,30 +219,26 @@ export default function RegisterClient() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#FAF9F7", color: "#1A1A1A" }}>
 
-      {/* ── NAV ─────────────────────────────────────────── */}
-      <nav
-        className="sticky top-0 z-50 border-b"
-        style={{ backgroundColor: "#FAF9F7", borderColor: "#E5E0D8" }}
-      >
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center">
-          <a href="/" className="text-lg font-semibold tracking-tight" style={{ color: "#1A1A1A" }}>
-            Ramen<span style={{ color: "#C8501A" }}>Hire</span>
-          </a>
-        </div>
-      </nav>
+      {/* -- NAV ------------------------------------------- */}
+      <Header zIndex={50} user={user} postJobCta={postJobCta} />
 
       <main className="max-w-2xl mx-auto px-6 py-16">
 
         {status === "success" ? (
-          /* ── SUCCESS STATE ──────────────────────────── */
+          /* -- SUCCESS STATE ---------------------------- */
           <div className="text-center py-20">
             <p className="text-5xl mb-6">🍜</p>
             <h1 className="text-2xl font-semibold mb-3" style={{ color: "#1A1A1A" }}>
               Check your email to confirm your registration
             </h1>
-            <p className="text-base mb-8" style={{ color: "#6B6560" }}>
+            <p className="text-base mb-3" style={{ color: "#6B6560" }}>
               We sent a confirmation link to the email you provided. Click it to submit your
               profile for review — the link expires in 48 hours.
+            </p>
+            <p className="text-base mb-8" style={{ color: "#6B6560" }}>
+              You can{" "}
+              <a href="/sign-in" style={{ color: "#C8501A" }}>sign in</a>{" "}
+              anytime to check your status, even before you&apos;re approved.
             </p>
             {logoUploadFailed && (
               <p className="text-sm mb-8" style={{ color: "#C8501A" }}>
@@ -230,21 +261,22 @@ export default function RegisterClient() {
           </div>
         ) : (
           <>
-            {/* ── HEADER ──────────────────────────────── */}
+            {/* -- HEADER -------------------------------- */}
             <div className="mb-10">
-              <a
-                href="/companies"
+              <button
+                type="button"
+                onClick={handleBack}
                 className="text-sm transition-colors"
                 style={{ color: "#6B6560" }}
                 onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLAnchorElement).style.color = "#C8501A";
+                  (e.currentTarget as HTMLButtonElement).style.color = "#C8501A";
                 }}
                 onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLAnchorElement).style.color = "#6B6560";
+                  (e.currentTarget as HTMLButtonElement).style.color = "#6B6560";
                 }}
               >
-                ← Back to companies
-              </a>
+                ← Back
+              </button>
               <h1
                 className="text-3xl font-semibold mt-5 mb-2"
                 style={{ color: "#1A1A1A" }}
@@ -257,7 +289,7 @@ export default function RegisterClient() {
               </p>
             </div>
 
-            {/* ── FORM ────────────────────────────────── */}
+            {/* -- FORM ---------------------------------- */}
             <form onSubmit={handleSubmit} className="flex flex-col gap-10">
 
               {/* Honeypot — hidden from real users, bots tend to fill every field */}
@@ -325,6 +357,27 @@ export default function RegisterClient() {
                     onFocus={focusOrange}
                     onBlur={blurGray}
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1.5" style={{ color: "#1A1A1A" }}>
+                    Password <span style={{ color: "#C8501A" }}>*</span>
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    minLength={8}
+                    autoComplete="new-password"
+                    value={form.password}
+                    onChange={field("password")}
+                    className={INPUT_CLS}
+                    style={INPUT_STYLE}
+                    onFocus={focusOrange}
+                    onBlur={blurGray}
+                  />
+                  <p className="text-xs mt-1.5" style={{ color: "#9B9690" }}>
+                    You&apos;ll use this to sign in and manage your listings, even before your profile is approved.
+                  </p>
                 </div>
 
                 <div>

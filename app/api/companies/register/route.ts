@@ -19,9 +19,28 @@ type RegisterBody = {
   revenue_range: string | null;
   founded_year: number | null;
   contact_email: string;
+  password: string;
   turnstile_token: string;
   honeypot?: string;
 };
+
+// Compensates for a partial registration failure by removing the just-created
+// Auth account. If this delete itself fails, the account becomes a real,
+// loginable orphan with no company row and no self-service recovery path
+// (retrying registration with the same email fails at createUser with
+// "already exists", since auth_user_id is UNIQUE) — log loudly so this is
+// findable and can be resolved manually via Supabase Studio.
+async function cleanupOrphanedAuthUser(authUserId: string): Promise<void> {
+  const { error } = await supabaseAdmin.auth.admin.deleteUser(authUserId);
+  if (error) {
+    console.error(
+      `ORPHANED AUTH ACCOUNT: failed to delete Auth user ${authUserId} while cleaning up a failed ` +
+        `registration. This account can still log in but has no company row and no self-service ` +
+        `recovery path — delete it manually via Supabase Studio (Authentication > Users).`,
+      error
+    );
+  }
+}
 
 async function insertCompany(
   id: string,
@@ -30,7 +49,8 @@ async function insertCompany(
   token: string,
   expiresAt: string,
   pendingLogoPath: string | null,
-  logoConfirmToken: string | null
+  logoConfirmToken: string | null,
+  authUserId: string
 ) {
   return supabaseAdmin.from("companies").insert({
     id,
@@ -48,6 +68,7 @@ async function insertCompany(
     contact_email: body.contact_email,
     verification_token: token,
     verification_token_expires_at: expiresAt,
+    auth_user_id: authUserId,
   });
 }
 
@@ -82,13 +103,45 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "bot_check_failed", message: BOT_CHECK_MESSAGE }, { status: 403 });
   }
 
-  if (!body.name || !body.website || !body.description || !body.why_work_here || !body.contact_email) {
+  if (!body.name || !body.website || !body.description || !body.why_work_here || !body.contact_email || !body.password) {
     return NextResponse.json(
       { error: "missing_fields", message: "Something went wrong. Please try again." },
       { status: 400 }
     );
   }
 
+  if (body.password.length < 8) {
+    return NextResponse.json(
+      { error: "weak_password", message: "Password must be at least 8 characters." },
+      { status: 400 }
+    );
+  }
+
+  // Real Auth account created at registration time, not after admin approval —
+  // this is what lets a company log in anytime to check its own status, even
+  // pre-approval. email_confirm: true so Supabase's own "confirm your email"
+  // flow never fires — the pre-existing verification_token/48h flow below
+  // remains the only email-verification gate, exactly as it worked before.
+  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    email: body.contact_email,
+    password: body.password,
+    email_confirm: true,
+  });
+
+  if (authError || !authData.user) {
+    const alreadyExists = authError?.message?.toLowerCase().includes("already");
+    return NextResponse.json(
+      {
+        error: alreadyExists ? "email_in_use" : "auth_signup_failed",
+        message: alreadyExists
+          ? "An account with this email already exists. Try signing in instead."
+          : "Something went wrong. Please try again.",
+      },
+      { status: alreadyExists ? 409 : 500 }
+    );
+  }
+
+  const authUserId = authData.user.id;
   const companyId = crypto.randomUUID();
 
   // Logo upload goes through a signed URL scoped to this company's own id.
@@ -107,6 +160,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       upload = { ...signed, company_id: companyId, logo_confirm_token: logoConfirmToken };
     } catch (err) {
       console.error("Failed to create signed logo upload URL:", err);
+      await cleanupOrphanedAuthUser(authUserId);
       return NextResponse.json(
         { error: "upload_url_failed", message: "Something went wrong. Please try again." },
         { status: 500 }
@@ -119,17 +173,22 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const token = crypto.randomUUID();
   const expiresAt = new Date(Date.now() + VERIFICATION_HOURS * 60 * 60 * 1000).toISOString();
 
-  let { error: insertError } = await insertCompany(companyId, slug, body, token, expiresAt, pendingLogoPath, logoConfirmToken);
+  let { error: insertError } = await insertCompany(companyId, slug, body, token, expiresAt, pendingLogoPath, logoConfirmToken, authUserId);
 
   // Slug collision — retry once with a short random suffix. The insert never
   // persisted on a 23505, so reusing the same id/token/expiresAt here is safe.
   if (insertError?.code === "23505" && insertError.message.includes("slug")) {
     slug = `${baseSlug}-${Math.floor(100 + Math.random() * 900)}`;
-    ({ error: insertError } = await insertCompany(companyId, slug, body, token, expiresAt, pendingLogoPath, logoConfirmToken));
+    ({ error: insertError } = await insertCompany(companyId, slug, body, token, expiresAt, pendingLogoPath, logoConfirmToken, authUserId));
   }
 
   if (insertError) {
     console.error("Company registration insert failed:", insertError);
+    // The company row never persisted — clean up the Auth account too, so a
+    // failed registration never leaves a loginable account with no company
+    // behind it (auth_user_id is also UNIQUE, so a retry would otherwise fail
+    // at the Auth step above with "already exists" for a company that doesn't exist).
+    await cleanupOrphanedAuthUser(authUserId);
     return NextResponse.json(
       { error: "insert_failed", message: "Something went wrong. Please try again." },
       { status: 500 }

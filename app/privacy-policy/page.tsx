@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import SiteFooter from "@/components/SiteFooter";
+import Header from "@/components/Header";
 import { CookieSettingsLink } from "@/components/CookieConsentBanner";
 import { buildPageMetadata } from "@/lib/metadata";
+import { getCurrentUser } from "@/lib/auth";
+import { getPostJobCta } from "@/lib/postJobCta";
 
 export const metadata: Metadata = buildPageMetadata({
   title: "Privacy Policy",
@@ -15,26 +18,19 @@ const H3 = "text-base font-semibold mt-6 mb-2";
 const P = "text-sm leading-relaxed mb-3";
 const UL = "text-sm leading-relaxed mb-3 list-disc pl-5 flex flex-col gap-1.5";
 
-export default function PrivacyPolicyPage() {
+export default async function PrivacyPolicyPage() {
+  const user = await getCurrentUser();
+  const postJobCta = await getPostJobCta(user);
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#FAF9F7", color: "#1A1A1A" }}>
-      <nav
-        className="sticky top-0 z-40 border-b"
-        style={{ backgroundColor: "#FAF9F7", borderColor: "#E5E0D8" }}
-      >
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center">
-          <a href="/" className="text-lg font-semibold tracking-tight" style={{ color: "#1A1A1A" }}>
-            Ramen<span style={{ color: "#C8501A" }}>Hire</span>
-          </a>
-        </div>
-      </nav>
+      <Header user={user} postJobCta={postJobCta} />
 
       <main className="max-w-3xl mx-auto px-6 py-16">
         <h1 className="text-3xl font-semibold mb-2" style={{ color: "#1A1A1A" }}>
           Privacy Policy
         </h1>
         <p className="text-sm mb-10" style={{ color: "#9B9690" }}>
-          Last updated: July 15, 2026
+          Last updated: July 21, 2026
         </p>
 
         <p className={P} style={{ color: "#6B6560" }}>
@@ -53,8 +49,9 @@ export default function PrivacyPolicyPage() {
         <h2 className={H2}>1. What we collect</h2>
         <p className={P} style={{ color: "#6B6560" }}>
           Beyond what you actively submit through a form, the only other data collected is the
-          anonymous, aggregate site-analytics traffic described below and in Section 5. There is no
-          account system and no login.
+          anonymous, aggregate site-analytics traffic described below and in Section 5. Job seekers
+          have no account system and no login. Companies do have real accounts, as of July 2026 —
+          see below.
         </p>
 
         <h3 className={H3}>Job seekers (applying to a job)</h3>
@@ -73,19 +70,46 @@ export default function PrivacyPolicyPage() {
           not publicly accessible; only we (as admin) can retrieve them, not other site visitors.
         </p>
 
-        <h3 className={H3}>Companies (posting a job or registering a company profile)</h3>
+        <h3 className={H3}>Companies (registering a company profile, and managing it afterward)</h3>
+        <p className={P} style={{ color: "#6B6560" }}>
+          Registering creates a real account (email + password), used to sign in and manage your
+          profile and listings going forward:
+        </p>
         <ul className={UL} style={{ color: "#6B6560" }}>
-          <li>Contact name and email address of the person submitting</li>
           <li>
-            Company details: name, website, description, &quot;why work here,&quot; team size,
-            approximate revenue range, founded year, and (optionally) a logo image
+            A password, which we never see or store in plain text — Supabase Auth (Section 3)
+            hashes it before it ever reaches our database.
           </li>
-          <li>Job details for any role submitted (title, type, location, salary range, description)</li>
+          <li>
+            Contact name and email address of the person registering. This becomes both your login
+            email and your public-facing contact email at registration time — the two can later
+            diverge, since Account Settings lets you change your contact email without changing your
+            login email.
+          </li>
+          <li>
+            Company details, collected once at registration and reused for every listing you post
+            afterward (not re-collected per listing): name, website, description, &quot;why work
+            here,&quot; team size, approximate revenue range, founded year, and (optionally) a logo
+            image.
+          </li>
+          <li>
+            Job details for each role you post (title, type, location, salary range, description) —
+            collected separately, whenever you actually post a listing, once your account is
+            approved.
+          </li>
         </ul>
         <p className={P} style={{ color: "#6B6560" }}>
           Company profile registrations include a hidden spam-trap field. It is never shown to
           real visitors and is not stored — if it&apos;s filled in (a sign of automated spam), the
           submission is silently discarded before anything is saved.
+        </p>
+
+        <h3 className={H3}>1a. Company accounts</h3>
+        <p className={P} style={{ color: "#6B6560" }}>
+          A company account can be in one of a few states: awaiting email confirmation, pending our
+          manual review, approved (able to post and manage listings), or not approved. You can sign
+          in at any time, in any state, to check your status. Requesting deletion of your account
+          (Section 7) puts it into its own distinct, time-limited state — see Section 6.
         </p>
 
         <h3 className={H3}>Subscribers (weekly email list)</h3>
@@ -130,7 +154,7 @@ export default function PrivacyPolicyPage() {
           following third parties process data on our behalf, strictly to run the service:
         </p>
         <ul className={UL} style={{ color: "#6B6560" }}>
-          <li><strong>Supabase</strong> — database and file storage hosting (Section 3).</li>
+          <li><strong>Supabase</strong> — database, file storage, and (for company accounts) authentication hosting (Section 3).</li>
           <li><strong>Vercel</strong> — hosts and serves the website; sees standard request/connection data as part of serving any web page.</li>
           <li>
             <strong>GoatCounter</strong>{" "}— cookieless site analytics that runs for every visitor
@@ -178,6 +202,14 @@ export default function PrivacyPolicyPage() {
         </ul>
 
         <h2 className={H2} id="cookies">5. Cookies</h2>
+        <p className={P} style={{ color: "#6B6560" }}>
+          <strong>Company sign-in session (strictly necessary, no consent banner)</strong> — set
+          regardless of your cookie choice below. If you sign in to a company account, a session
+          cookie (<code>sb-...-auth-token</code>) is set so you stay signed in across pages and
+          visits. This cookie is required for the sign-in feature itself to function — it
+          isn&apos;t used for tracking or analytics and contains no data beyond what&apos;s needed
+          to identify your session. It&apos;s removed when you sign out.
+        </p>
         <p className={P} style={{ color: "#6B6560" }}>
           RamenHire does not set any non-essential cookie until you accept the cookie banner shown
           on your first visit. If you decline, no analytics cookie is set at all — this isn&apos;t
@@ -233,30 +265,69 @@ export default function PrivacyPolicyPage() {
 
         <h2 className={H2}>6. Data retention</h2>
         <p className={P} style={{ color: "#6B6560" }}>
-          We&apos;ll describe this honestly rather than promise a schedule we don&apos;t enforce:{" "}
-          <strong>there is currently no automated deletion or retention policy</strong>. Submitted
-          applications, job post requests, subscriber entries, and company registrations persist
-          indefinitely unless manually deleted by us. If you&apos;d like your data removed sooner,
+          Company accounts and their listings now have automated retention windows. These are{" "}
+          <strong>grace periods for undoing a deletion, not a legal or tax record-retention
+          schedule</strong> — we make no compliance claim about how long data is kept; they exist
+          purely so a deletion request (yours, or an account that never got approved) isn&apos;t
+          instantly irreversible.
+        </p>
+        <ul className={UL} style={{ color: "#6B6560" }}>
+          <li>
+            <strong>Company registrations that never get approved</strong> (still awaiting email
+            confirmation, still in our review queue, or not approved) are eligible for removal{" "}
+            <strong>15 days</strong> after registration.
+          </li>
+          <li>
+            <strong>A company that requests account deletion</strong> (Section 7) gets a{" "}
+            <strong>90-day</strong> window before permanent removal — during which the request can
+            still be reversed by emailing us.
+          </li>
+          <li>
+            <strong>That same company&apos;s job listings</strong> are removed on their own{" "}
+            <strong>30-day</strong> window, independent of and shorter than the 90-day account
+            window — so listings come down well before the account itself is fully purged.
+          </li>
+          <li>
+            Permanent removal, once a window elapses, deletes the company/listing record, any
+            uploaded logo or CV files tied to it, and the underlying sign-in account itself — not
+            just a status flag.
+          </li>
+        </ul>
+        <p className={P} style={{ color: "#6B6560" }}>
+          Everything not covered above — submitted job applications, job-post-request history
+          predating company accounts, and subscriber list entries — still has{" "}
+          <strong>no automated deletion or retention policy</strong>; those persist indefinitely
+          unless manually deleted by us. If you&apos;d like data removed sooner than these windows,
           see Section 7.
         </p>
 
         <h2 className={H2}>7. Your rights</h2>
         <p className={P} style={{ color: "#6B6560" }}>
           Depending on where you live, you may have rights to access, correct, delete, restrict, or
-          export your data, and to object to how it&apos;s processed. To exercise any of these
-          rights, email <strong>hello@ramenhire.com</strong>. We&apos;ll describe the process
-          honestly: at this stage there is no automated self-service tool — a person manually
-          locates and removes or exports your data on request. We aim to respond promptly, but this
-          is a manual process, not an instant one.
+          export your data, and to object to how it&apos;s processed.
+        </p>
+        <p className={P} style={{ color: "#6B6560" }}>
+          <strong>Companies</strong> can now request deletion of their own account and listings
+          directly from Account Settings, self-service — no email needed to initiate it (though
+          Section 6&apos;s 90-day window means emailing <strong>hello@ramenhire.com</strong> is
+          still how you&apos;d reverse a request already made). <strong>Job seekers</strong> have no
+          account or self-service tool; to exercise any right over data submitted as a job seeker
+          (or anything not covered by the self-service tool above), email{" "}
+          <strong>hello@ramenhire.com</strong>. We&apos;ll describe that process honestly: a person
+          manually locates and removes or exports the data on request. We aim to respond promptly,
+          but this is a manual process, not an instant one.
         </p>
 
         <h2 className={H2}>8. Security</h2>
         <p className={P} style={{ color: "#6B6560" }}>
           Uploaded CVs are stored in a private storage bucket that isn&apos;t publicly accessible —
-          only admin access can retrieve them. All data access is governed by database-level
-          row-level-security rules restricting what an anonymous visitor can read versus what only
-          an authenticated admin can. No system is perfectly secure, but we don&apos;t take
-          shortcuts like exposing raw database access to the public.
+          only admin access can retrieve them. Company account passwords are handled entirely by
+          our authentication provider (Supabase Auth) and hashed before storage — we never see or
+          store a plain-text password. All data access is governed by database-level
+          row-level-security rules: an anonymous visitor, a signed-in company (scoped strictly to
+          its own account and listings), and an admin each see only what their role is allowed to.
+          No system is perfectly secure, but we don&apos;t take shortcuts like exposing raw database
+          access to the public.
         </p>
 
         <h2 className={H2}>9. Children&apos;s privacy</h2>

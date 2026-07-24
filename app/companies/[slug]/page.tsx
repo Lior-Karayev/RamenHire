@@ -4,9 +4,12 @@ import { supabase } from "@/lib/supabase";
 import { companyMatchesJob, TEAM_SIZE_OPTIONS, REVENUE_OPTIONS, type Company } from "@/lib/companies";
 import type { JobListing } from "@/app/HomeClient";
 import SiteFooter from "@/components/SiteFooter";
+import Header from "@/components/Header";
+import CompanyListingsManager from "@/components/CompanyListingsManager";
 import { buildPageMetadata } from "@/lib/metadata";
-
-export const revalidate = 60;
+import { getCurrentUser } from "@/lib/auth";
+import { getPostJobCta } from "@/lib/postJobCta";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -18,6 +21,7 @@ async function getCompany(slug: string): Promise<Company | null> {
     .select("*")
     .eq("slug", slug)
     .eq("status", "approved")
+    .is("deleted_at", null)
     .maybeSingle();
 
   if (error || !data) return null;
@@ -28,10 +32,25 @@ async function getMatchedJobs(company: Company): Promise<JobListing[]> {
   const { data, error } = await supabase
     .from("job_listings")
     .select("*")
-    .eq("is_active", true);
+    .eq("is_active", true)
+    .is("deleted_at", null);
 
   if (error || !data) return [];
   return data.filter((job) => companyMatchesJob(company, job));
+}
+
+// Anon reads only ever see is_active=true rows (RLS), so the owner's own
+// inactive listings need the service-role client to be visible in their own
+// management view.
+async function getOwnedJobs(companyId: string): Promise<JobListing[]> {
+  const { data, error } = await supabaseAdmin
+    .from("job_listings")
+    .select("*")
+    .eq("company_id", companyId)
+    .is("deleted_at", null);
+
+  if (error || !data) return [];
+  return data;
 }
 
 function truncate(text: string, max = 155): string {
@@ -60,6 +79,24 @@ export default async function CompanyProfilePage({ params }: Props) {
   if (!company) notFound();
 
   const jobs = await getMatchedJobs(company);
+  const user = await getCurrentUser();
+
+  let isOwner = false;
+  let ownCompany: Pick<Company, "id" | "status" | "deleted_at"> | null = null;
+  if (user) {
+    const { data } = await supabaseAdmin
+      .from("companies")
+      .select("id, status, deleted_at")
+      .eq("auth_user_id", user.id)
+      .maybeSingle<Pick<Company, "id" | "status" | "deleted_at">>();
+    ownCompany = data;
+    isOwner = ownCompany?.id === company.id;
+  }
+
+  const postJobCta = await getPostJobCta(user, ownCompany);
+  const ownedJobs = isOwner ? await getOwnedJobs(company.id) : [];
+  const ownedJobIds = new Set(ownedJobs.map((j) => j.id));
+  const otherJobs = jobs.filter((j) => !ownedJobIds.has(j.id));
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -87,23 +124,7 @@ export default async function CompanyProfilePage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <nav
-        className="sticky top-0 z-40 border-b"
-        style={{ backgroundColor: "#FAF9F7", borderColor: "#E5E0D8" }}
-      >
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
-          <a href="/" className="text-lg font-semibold tracking-tight" style={{ color: "#1A1A1A" }}>
-            Ramen<span style={{ color: "#C8501A" }}>Hire</span>
-          </a>
-          <a
-            href="/companies"
-            className="text-sm transition-colors"
-            style={{ color: "#6B6560" }}
-          >
-            ← All companies
-          </a>
-        </div>
-      </nav>
+      <Header user={user} postJobCta={postJobCta} />
 
       <main className="max-w-3xl mx-auto px-6 py-16">
         <div className="flex items-start gap-4 mb-6">
@@ -189,18 +210,43 @@ export default async function CompanyProfilePage({ params }: Props) {
           </p>
         </section>
 
+        {isOwner && (
+          <section className="mb-10">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-semibold" style={{ color: "#1A1A1A" }}>
+                Your Listings {ownedJobs.length > 0 && `(${ownedJobs.length})`}
+              </h2>
+              <a
+                href="/post-job"
+                className="text-sm font-medium px-4 py-2 rounded-lg border"
+                style={{ backgroundColor: "#C8501A", color: "#FAF9F7", borderColor: "#C8501A" }}
+              >
+                + Post a new job
+              </a>
+            </div>
+
+            {ownedJobs.length === 0 ? (
+              <p className="text-sm" style={{ color: "#6B6560" }}>
+                You haven&apos;t posted any listings yet.
+              </p>
+            ) : (
+              <CompanyListingsManager jobs={ownedJobs} />
+            )}
+          </section>
+        )}
+
         <section>
           <h2 className="text-base font-semibold mb-4" style={{ color: "#1A1A1A" }}>
-            Open Roles {jobs.length > 0 && `(${jobs.length})`}
+            Open Roles {otherJobs.length > 0 && `(${otherJobs.length})`}
           </h2>
 
-          {jobs.length === 0 ? (
+          {otherJobs.length === 0 ? (
             <p className="text-sm" style={{ color: "#6B6560" }}>
               No open roles listed right now.
             </p>
           ) : (
             <div className="flex flex-col gap-3">
-              {jobs.map((job) => (
+              {otherJobs.map((job) => (
                 <div
                   key={job.id}
                   className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 rounded-lg border"

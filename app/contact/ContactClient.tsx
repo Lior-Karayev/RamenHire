@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import SiteFooter from "@/components/SiteFooter";
+import Header from "@/components/Header";
+import type { CurrentUser } from "@/lib/auth";
+import type { PostJobCta } from "@/lib/postJobCta";
 
 type FormData = {
   name: string;
@@ -39,7 +42,12 @@ type FocusEl = React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSel
 function focusOrange(e: FocusEl) { e.currentTarget.style.borderColor = "#C8501A"; }
 function blurGray(e: FocusEl)   { e.currentTarget.style.borderColor = "#E5E0D8"; }
 
-export default function ContactClient() {
+type Props = {
+  user: CurrentUser | null;
+  postJobCta: PostJobCta;
+};
+
+export default function ContactClient({ user, postJobCta }: Props) {
   const [form, setForm] = useState<FormData>(INITIAL);
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState("");
@@ -94,22 +102,13 @@ export default function ContactClient() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#FAF9F7", color: "#1A1A1A" }}>
 
-      {/* ── NAV ─────────────────────────────────────────── */}
-      <nav
-        className="sticky top-0 z-50 border-b"
-        style={{ backgroundColor: "#FAF9F7", borderColor: "#E5E0D8" }}
-      >
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center">
-          <a href="/" className="text-lg font-semibold tracking-tight" style={{ color: "#1A1A1A" }}>
-            Ramen<span style={{ color: "#C8501A" }}>Hire</span>
-          </a>
-        </div>
-      </nav>
+      {/* -- NAV ------------------------------------------- */}
+      <Header zIndex={50} user={user} postJobCta={postJobCta} />
 
       <main className="max-w-2xl mx-auto px-6 py-16">
 
         {status === "success" ? (
-          /* ── SUCCESS STATE ──────────────────────────── */
+          /* -- SUCCESS STATE ---------------------------- */
           <div className="text-center py-20">
             <p className="text-5xl mb-6">🍜</p>
             <h1 className="text-2xl font-semibold mb-3" style={{ color: "#1A1A1A" }}>
@@ -134,7 +133,7 @@ export default function ContactClient() {
           </div>
         ) : (
           <>
-            {/* ── HEADER ──────────────────────────────── */}
+            {/* -- HEADER -------------------------------- */}
             <div className="mb-10">
               <h1 className="text-3xl font-semibold mb-2" style={{ color: "#1A1A1A" }}>
                 Get in touch
@@ -145,7 +144,7 @@ export default function ContactClient() {
               </p>
             </div>
 
-            {/* ── FORM ────────────────────────────────── */}
+            {/* -- FORM ---------------------------------- */}
             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
 
               {/* Honeypot — hidden from real users, bots tend to fill every field */}

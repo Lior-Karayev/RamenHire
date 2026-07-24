@@ -9,6 +9,24 @@ async function waitForLoad(page) {
   await new Promise((r) => setTimeout(r, 1200));
 }
 
+async function dismissCookieBanner(page) {
+  try {
+    await page.waitForSelector('[aria-label="Cookie consent"]', { timeout: 3000 });
+    const declineHandle = await page.evaluateHandle(() => {
+      const banner = document.querySelector('[aria-label="Cookie consent"]');
+      if (!banner) return null;
+      return [...banner.querySelectorAll("button")].find((b) => b.textContent.trim() === "Decline");
+    });
+    const declineElement = declineHandle.asElement();
+    if (declineElement) {
+      await declineElement.click();
+      await new Promise((r) => setTimeout(r, 400));
+    }
+  } catch {
+    // banner didn't appear — nothing to dismiss
+  }
+}
+
 async function run() {
   const browser = await puppeteer.launch({ headless: true });
 
@@ -17,6 +35,7 @@ async function run() {
   await ogPage.setViewport({ width: 1200, height: 630 });
   await ogPage.goto(URL, { waitUntil: "networkidle0", timeout: 30000 });
   await waitForLoad(ogPage);
+  await dismissCookieBanner(ogPage);
   await ogPage.screenshot({
     path: path.join(OUT_DIR, "og-screenshot.png"),
     clip: { x: 0, y: 0, width: 1200, height: 630 },
@@ -29,6 +48,7 @@ async function run() {
   await fullPage.setViewport({ width: 1440, height: 900, deviceScaleFactor: 2 });
   await fullPage.goto(URL, { waitUntil: "networkidle0", timeout: 30000 });
   await waitForLoad(fullPage);
+  await dismissCookieBanner(fullPage);
   await fullPage.screenshot({
     path: path.join(OUT_DIR, "full-screenshot.png"),
     fullPage: true,

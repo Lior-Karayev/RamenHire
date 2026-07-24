@@ -1,8 +1,8 @@
 import { supabase } from "@/lib/supabase";
 import HomeClient, { type JobListing } from "./HomeClient";
 import type { Company } from "@/lib/companies";
-
-export const revalidate = 60;
+import { getCurrentUser } from "@/lib/auth";
+import { getPostJobCta } from "@/lib/postJobCta";
 
 function buildJobPostingSchema(job: JobListing) {
   return {
@@ -35,6 +35,7 @@ export default async function Home() {
       .from("job_listings")
       .select("*", { count: "exact" })
       .eq("is_active", true)
+      .is("deleted_at", null)
       .order("created_at", { ascending: false });
 
     if (!error) {
@@ -49,7 +50,8 @@ export default async function Home() {
     const { data, error } = await supabase
       .from("companies")
       .select("*")
-      .eq("status", "approved");
+      .eq("status", "approved")
+      .is("deleted_at", null);
 
     if (!error) companies = data ?? [];
   } catch {
@@ -57,6 +59,8 @@ export default async function Home() {
   }
 
   const jobPostingSchemas = jobs.map(buildJobPostingSchema);
+  const user = await getCurrentUser();
+  const postJobCta = await getPostJobCta(user);
 
   return (
     <>
@@ -66,7 +70,7 @@ export default async function Home() {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jobPostingSchemas) }}
         />
       )}
-      <HomeClient jobs={jobs} totalCount={totalCount} companies={companies} />
+      <HomeClient jobs={jobs} totalCount={totalCount} companies={companies} user={user} postJobCta={postJobCta} />
     </>
   );
 }

@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import SiteFooter from "@/components/SiteFooter";
+import Header from "@/components/Header";
 import { trackEvent } from "@/lib/analytics";
+import type { CurrentUser } from "@/lib/auth";
+import type { PostJobCta } from "@/lib/postJobCta";
 
 const JOB_TAGS = [
   "Engineering", "Design", "Product", "Marketing", "Sales",
@@ -13,34 +16,20 @@ const JOB_TAGS = [
 ];
 
 type FormData = {
-  contact_name: string;
-  contact_email: string;
-  company_name: string;
-  company_website: string;
-  is_bootstrapped: "" | "yes" | "no";
-  revenue_range: string;
   job_title: string;
   job_type: string;
   location: string;
   salary_range: string;
   job_description: string;
-  company_description: string;
   application_link: string;
 };
 
 const INITIAL: FormData = {
-  contact_name: "",
-  contact_email: "",
-  company_name: "",
-  company_website: "",
-  is_bootstrapped: "",
-  revenue_range: "",
   job_title: "",
   job_type: "",
   location: "",
   salary_range: "",
   job_description: "",
-  company_description: "",
   application_link: "",
 };
 
@@ -61,7 +50,12 @@ type FocusEl = React.FocusEvent<
 function focusOrange(e: FocusEl) { e.currentTarget.style.borderColor = "#C8501A"; }
 function blurGray(e: FocusEl)   { e.currentTarget.style.borderColor = "#E5E0D8"; }
 
-export default function PostJobClient() {
+type Props = {
+  user: CurrentUser | null;
+  postJobCta: PostJobCta;
+};
+
+export default function PostJobClient({ user, postJobCta }: Props) {
   const [form, setForm] = useState<FormData>(INITIAL);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [status, setStatus] = useState<Status>("idle");
@@ -84,22 +78,15 @@ export default function PostJobClient() {
     setStatus("loading");
     setError("");
 
-    const res = await fetch("/api/post-job", {
+    const res = await fetch("/api/companies/job-listings", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        contact_name: form.contact_name,
-        contact_email: form.contact_email,
-        company_name: form.company_name,
-        company_website: form.company_website || null,
-        is_bootstrapped: form.is_bootstrapped === "yes",
-        revenue_range: form.revenue_range || null,
         job_title: form.job_title,
         job_type: form.job_type,
         location: form.location,
         salary_range: form.salary_range,
         job_description: form.job_description,
-        company_description: form.company_description,
         application_link: form.application_link,
         tags: selectedTags.length > 0 ? selectedTags : null,
       }),
@@ -119,29 +106,20 @@ export default function PostJobClient() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#FAF9F7", color: "#1A1A1A" }}>
 
-      {/* ── NAV ─────────────────────────────────────────── */}
-      <nav
-        className="sticky top-0 z-50 border-b"
-        style={{ backgroundColor: "#FAF9F7", borderColor: "#E5E0D8" }}
-      >
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center">
-          <a href="/" className="text-lg font-semibold tracking-tight" style={{ color: "#1A1A1A" }}>
-            Ramen<span style={{ color: "#C8501A" }}>Hire</span>
-          </a>
-        </div>
-      </nav>
+      {/* -- NAV ------------------------------------------- */}
+      <Header zIndex={50} user={user} postJobCta={postJobCta} />
 
       <main className="max-w-2xl mx-auto px-6 py-16">
 
         {status === "success" ? (
-          /* ── SUCCESS STATE ──────────────────────────── */
+          /* -- SUCCESS STATE ---------------------------- */
           <div className="text-center py-20">
             <p className="text-5xl mb-6">🍜</p>
             <h1 className="text-2xl font-semibold mb-3" style={{ color: "#1A1A1A" }}>
-              Listing submitted!
+              Your listing is live!
             </h1>
             <p className="text-base mb-8" style={{ color: "#6B6560" }}>
-              Thanks! We&apos;ll review your listing and get back to you within 24 hours.
+              Candidates can see it now. Manage your listings anytime from your company profile.
             </p>
             <a
               href="/"
@@ -159,7 +137,7 @@ export default function PostJobClient() {
           </div>
         ) : (
           <>
-            {/* ── HEADER ──────────────────────────────── */}
+            {/* -- HEADER -------------------------------- */}
             <div className="mb-10">
               <a
                 href="/"
@@ -187,161 +165,8 @@ export default function PostJobClient() {
               </p>
             </div>
 
-            {/* ── FORM ────────────────────────────────── */}
+            {/* -- FORM ---------------------------------- */}
             <form onSubmit={handleSubmit} className="flex flex-col gap-10">
-
-              {/* About you */}
-              <section className="flex flex-col gap-5">
-                <h2 className="text-base font-semibold" style={{ color: "#1A1A1A" }}>
-                  About you
-                </h2>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1.5" style={{ color: "#1A1A1A" }}>
-                    Your Name <span style={{ color: "#C8501A" }}>*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={form.contact_name}
-                    onChange={field("contact_name")}
-                    className={INPUT_CLS}
-                    style={INPUT_STYLE}
-                    onFocus={focusOrange}
-                    onBlur={blurGray}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1.5" style={{ color: "#1A1A1A" }}>
-                    Work Email <span style={{ color: "#C8501A" }}>*</span>
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={form.contact_email}
-                    onChange={field("contact_email")}
-                    className={INPUT_CLS}
-                    style={INPUT_STYLE}
-                    onFocus={focusOrange}
-                    onBlur={blurGray}
-                  />
-                </div>
-              </section>
-
-              <div style={{ borderBottom: "1px solid #E5E0D8" }} />
-
-              {/* About your company */}
-              <section className="flex flex-col gap-5">
-                <h2 className="text-base font-semibold" style={{ color: "#1A1A1A" }}>
-                  About your company
-                </h2>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1.5" style={{ color: "#1A1A1A" }}>
-                    Company Name <span style={{ color: "#C8501A" }}>*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={form.company_name}
-                    onChange={field("company_name")}
-                    className={INPUT_CLS}
-                    style={INPUT_STYLE}
-                    onFocus={focusOrange}
-                    onBlur={blurGray}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1.5" style={{ color: "#1A1A1A" }}>
-                    Company Website <span style={{ color: "#C8501A" }}>*</span>
-                  </label>
-                  <input
-                    type="url"
-                    required
-                    value={form.company_website}
-                    onChange={field("company_website")}
-                    placeholder="https://..."
-                    className={INPUT_CLS}
-                    style={INPUT_STYLE}
-                    onFocus={focusOrange}
-                    onBlur={blurGray}
-                  />
-                </div>
-
-                <div>
-                  <p className="text-sm font-medium mb-2.5" style={{ color: "#1A1A1A" }}>
-                    Is your company bootstrapped / self-funded?{" "}
-                    <span style={{ color: "#C8501A" }}>*</span>
-                  </p>
-                  <div className="flex gap-6">
-                    {(["yes", "no"] as const).map((val) => (
-                      <label key={val} className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="is_bootstrapped"
-                          value={val}
-                          required
-                          checked={form.is_bootstrapped === val}
-                          onChange={() =>
-                            setForm((p) => ({ ...p, is_bootstrapped: val }))
-                          }
-                          style={{ accentColor: "#C8501A", width: "16px", height: "16px" }}
-                        />
-                        <span className="text-sm" style={{ color: "#1A1A1A" }}>
-                          {val === "yes" ? "Yes" : "No"}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1.5" style={{ color: "#1A1A1A" }}>
-                    Approximate Revenue Range{" "}
-                    <span className="text-xs font-normal" style={{ color: "#9B9690" }}>
-                      (optional)
-                    </span>
-                  </label>
-                  <select
-                    value={form.revenue_range}
-                    onChange={field("revenue_range")}
-                    className={INPUT_CLS}
-                    style={INPUT_STYLE}
-                    onFocus={focusOrange}
-                    onBlur={blurGray}
-                  >
-                    <option value="">Select a range</option>
-                    <option value="pre-revenue">Pre-revenue</option>
-                    <option value="under-10k">Under $10K / mo</option>
-                    <option value="10k-50k">$10K – $50K / mo</option>
-                    <option value="50k-100k">$50K – $100K / mo</option>
-                    <option value="100k-plus">$100K+ / mo</option>
-                    <option value="prefer-not-to-say">Prefer not to say</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1.5" style={{ color: "#1A1A1A" }}>
-                    What makes your company great to work at?{" "}
-                    <span style={{ color: "#C8501A" }}>*</span>
-                  </label>
-                  <textarea
-                    required
-                    rows={4}
-                    value={form.company_description}
-                    onChange={field("company_description")}
-                    placeholder="Tell candidates what makes working here special — culture, pace, mission, perks…"
-                    className={`${INPUT_CLS} resize-none`}
-                    style={INPUT_STYLE}
-                    onFocus={focusOrange}
-                    onBlur={blurGray}
-                  />
-                </div>
-              </section>
-
-              <div style={{ borderBottom: "1px solid #E5E0D8" }} />
 
               {/* About the role */}
               <section className="flex flex-col gap-5">
@@ -514,7 +339,7 @@ export default function PostJobClient() {
                 {status === "loading" && (
                   <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 )}
-                {status === "loading" ? "Submitting…" : "Submit Listing — Free 🍜"}
+                {status === "loading" ? "Publishing…" : "Publish Listing — Free 🍜"}
               </button>
             </form>
           </>

@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import { supabase } from "@/lib/supabase";
 import type { Company } from "@/lib/companies";
 import SiteFooter from "@/components/SiteFooter";
+import Header from "@/components/Header";
 import { buildPageMetadata } from "@/lib/metadata";
-
-export const revalidate = 60;
+import { getCurrentUser } from "@/lib/auth";
+import { getPostJobCta } from "@/lib/postJobCta";
 
 export const metadata: Metadata = buildPageMetadata({
   title: "Companies Hiring at Bootstrapped Startups",
@@ -21,6 +22,7 @@ export default async function CompaniesPage() {
       .from("companies")
       .select("*")
       .eq("status", "approved")
+      .is("deleted_at", null)
       .order("created_at", { ascending: false });
 
     if (!error) companies = data ?? [];
@@ -28,25 +30,12 @@ export default async function CompaniesPage() {
     // Render empty state rather than crash if DB is unreachable
   }
 
+  const user = await getCurrentUser();
+  const postJobCta = await getPostJobCta(user);
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#FAF9F7", color: "#1A1A1A" }}>
-      <nav
-        className="sticky top-0 z-40 border-b"
-        style={{ backgroundColor: "#FAF9F7", borderColor: "#E5E0D8" }}
-      >
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
-          <a href="/" className="text-lg font-semibold tracking-tight" style={{ color: "#1A1A1A" }}>
-            Ramen<span style={{ color: "#C8501A" }}>Hire</span>
-          </a>
-          <a
-            href="/companies/register"
-            className="text-sm font-medium px-4 py-2 rounded-lg border transition-colors"
-            style={{ backgroundColor: "#C8501A", color: "#FAF9F7", borderColor: "#C8501A" }}
-          >
-            Register Your Company
-          </a>
-        </div>
-      </nav>
+      <Header user={user} postJobCta={postJobCta} />
 
       <main className="max-w-5xl mx-auto px-6 py-16">
         <div className="mb-12 max-w-2xl">

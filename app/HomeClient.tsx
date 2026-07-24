@@ -6,8 +6,9 @@ import { companyMatchesJob, type Company } from "@/lib/companies";
 import { trackEvent } from "@/lib/analytics";
 import SiteFooter from "@/components/SiteFooter";
 import TurnstileWidget from "@/components/TurnstileWidget";
-
-const POST_JOB_URL = "/post-job";
+import Header from "@/components/Header";
+import type { CurrentUser } from "@/lib/auth";
+import type { PostJobCta } from "@/lib/postJobCta";
 
 export type JobListing = {
   id: string;
@@ -27,6 +28,8 @@ export type JobListing = {
   valid_through: string;
   created_at: string;
   updated_at: string;
+  company_id: string | null;
+  deleted_at: string | null;
 };
 
 const ROLE_OPTIONS = ["Engineering", "Design", "Product", "Marketing", "Support", "Other"];
@@ -93,14 +96,16 @@ type Props = {
   jobs: JobListing[];
   totalCount: number;
   companies: Company[];
+  user: CurrentUser | null;
+  postJobCta: PostJobCta;
 };
 
-export default function HomeClient({ jobs, totalCount, companies }: Props) {
+export default function HomeClient({ jobs, totalCount, companies, user, postJobCta }: Props) {
   function matchedCompanySlug(job: JobListing): string | null {
     const match = companies.find((c) => companyMatchesJob(c, job));
     return match?.slug ?? null;
   }
-  // ── Pagination ───────────────────────────────────────────
+  // -- Pagination -------------------------------------------
   const JOBS_PER_PAGE = 6;
   const [currentPage, setCurrentPage] = useState(1);
   const [jobsVisible, setJobsVisible] = useState(true);
@@ -119,7 +124,7 @@ export default function HomeClient({ jobs, totalCount, companies }: Props) {
     }, 200);
   }
 
-  // ── Bootstrapped badge tooltip ───────────────────────────
+  // -- Bootstrapped badge tooltip ---------------------------
   const [tooltipJobId, setTooltipJobId] = useState<string | null>(null);
   const tooltipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -129,7 +134,7 @@ export default function HomeClient({ jobs, totalCount, companies }: Props) {
     tooltipTimeoutRef.current = setTimeout(() => setTooltipJobId(null), 3000);
   }
 
-  // ── Apply modal ──────────────────────────────────────────
+  // -- Apply modal ------------------------------------------
   const [selectedJob, setSelectedJob] = useState<JobListing | null>(null);
   const [applyForm, setApplyForm] = useState<ApplyForm>({ name: "", email: "", why: "", cv: "" });
   const [applyStatus, setApplyStatus] = useState<Status>("idle");
@@ -141,17 +146,21 @@ export default function HomeClient({ jobs, totalCount, companies }: Props) {
   const [applyTurnstileToken, setApplyTurnstileToken] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // ── Subscribe form ───────────────────────────────────────
+  // -- Subscribe form ---------------------------------------
   const [subForm, setSubForm] = useState<SubForm>({ name: "", email: "", roles: [] });
   const [subStatus, setSubStatus] = useState<Status>("idle");
   const [subError, setSubError] = useState("");
 
-  // ── Launch week popup ────────────────────────────────────
+  // -- Launch week popup ------------------------------------
   const [popupMounted, setPopupMounted] = useState(false);
   const [popupVisible, setPopupVisible] = useState(false);
   const jobsSectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
+    // The popup is a first-time-visitor nudge to register/post — anyone with
+    // an active session (pending or approved) has already done the thing
+    // it's asking for, so it shouldn't reappear for them.
+    if (user) return;
     if (window.innerWidth < 640) return;
     if (sessionStorage.getItem("ramenhire_popup_dismissed") === "true") return;
     const section = jobsSectionRef.current;
@@ -173,7 +182,7 @@ export default function HomeClient({ jobs, totalCount, companies }: Props) {
     );
     observer.observe(section);
     return () => observer.disconnect();
-  }, []);
+  }, [user]);
 
   function dismissPopup() {
     setPopupVisible(false);
@@ -310,7 +319,7 @@ export default function HomeClient({ jobs, totalCount, companies }: Props) {
     }));
   }
 
-  // ── File upload helpers ──────────────────────────────────
+  // -- File upload helpers ----------------------------------
   const ALLOWED_MIME = [
     "application/pdf",
     "application/msword",
@@ -364,7 +373,7 @@ export default function HomeClient({ jobs, totalCount, companies }: Props) {
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#FAF9F7", color: "#1A1A1A" }}>
 
-      {/* ── LAUNCH WEEK POPUP ────────────────────────────── */}
+      {/* -- LAUNCH WEEK POPUP ------------------------------ */}
       {popupMounted && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -424,14 +433,14 @@ export default function HomeClient({ jobs, totalCount, companies }: Props) {
               </div>
 
               <a
-                href="/post-job"
+                href={postJobCta.href}
                 className="block w-full text-center py-3 rounded-lg text-sm font-medium mb-3 transition-colors"
                 style={{ backgroundColor: "#C8501A", color: "#FAF9F7" }}
                 onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#A8401A"; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#C8501A"; }}
                 onClick={() => trackEvent("launch_popup_cta_click")}
               >
-                Post a Job — It&apos;s Free →
+                {postJobCta.label} →
               </a>
 
               <button
@@ -448,7 +457,7 @@ export default function HomeClient({ jobs, totalCount, companies }: Props) {
         </div>
       )}
 
-      {/* ── APPLY MODAL ───────────────────────────────────── */}
+      {/* -- APPLY MODAL ------------------------------------- */}
       {selectedJob && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -704,39 +713,15 @@ export default function HomeClient({ jobs, totalCount, companies }: Props) {
         </div>
       )}
 
-      {/* ── NAVBAR ────────────────────────────────────────── */}
-      <nav
-        className="sticky top-0 z-40 border-b"
-        style={{ backgroundColor: "#FAF9F7", borderColor: "#E5E0D8" }}
-      >
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
-          <span className="text-lg font-semibold tracking-tight" style={{ color: "#1A1A1A" }}>
-            Ramen<span style={{ color: "#C8501A" }}>Hire</span>
-          </span>
-          <a
-            href={POST_JOB_URL}
-            className="text-sm font-medium px-4 py-2 rounded-lg border transition-colors"
-            style={{
-              backgroundColor: "#C8501A",
-              color: "#FAF9F7",
-              borderColor: "#C8501A",
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#A8401A";
-              (e.currentTarget as HTMLAnchorElement).style.borderColor = "#A8401A";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#C8501A";
-              (e.currentTarget as HTMLAnchorElement).style.borderColor = "#C8501A";
-            }}
-            onClick={() => trackEvent("post_job_click")}
-          >
-            Post a Job
-          </a>
-        </div>
-      </nav>
+      {/* -- NAVBAR ------------------------------------------ */}
+      <Header
+        linkLogo={false}
+        user={user}
+        postJobCta={postJobCta}
+        onPostJobClick={() => trackEvent("post_job_click")}
+      />
 
-      {/* ── HERO ──────────────────────────────────────────── */}
+      {/* -- HERO -------------------------------------------- */}
       <section className="max-w-5xl mx-auto px-6 pt-24 pb-20">
         <div className="max-w-2xl">
           <div
@@ -775,7 +760,7 @@ export default function HomeClient({ jobs, totalCount, companies }: Props) {
               Browse Jobs
             </a>
             <a
-              href={POST_JOB_URL}
+              href={postJobCta.href}
               className="inline-flex items-center px-5 py-2.5 rounded-lg border text-sm font-medium transition-colors"
               style={{ backgroundColor: "transparent", color: "#1A1A1A", borderColor: "#E5E0D8" }}
               onMouseEnter={(e) => {
@@ -788,7 +773,7 @@ export default function HomeClient({ jobs, totalCount, companies }: Props) {
               }}
               onClick={() => trackEvent("post_job_click")}
             >
-              Post a Job — It&apos;s Free 🍜
+              {postJobCta.label} 🍜
             </a>
           </div>
           <p className="text-xs mt-3" style={{ color: "#9CA3AF" }}>
@@ -797,7 +782,7 @@ export default function HomeClient({ jobs, totalCount, companies }: Props) {
         </div>
       </section>
 
-      {/* ── STATS BAR ─────────────────────────────────────── */}
+      {/* -- STATS BAR --------------------------------------- */}
       <section className="border-y" style={{ borderColor: "#E5E0D8", backgroundColor: "#FAF9F7" }}>
         <div className="max-w-5xl mx-auto px-6">
           <div className="grid grid-cols-2 md:grid-cols-4">
@@ -826,7 +811,7 @@ export default function HomeClient({ jobs, totalCount, companies }: Props) {
         </div>
       </section>
 
-      {/* ── WHY BOOTSTRAPPED ──────────────────────────────── */}
+      {/* -- WHY BOOTSTRAPPED -------------------------------- */}
       <section style={{ backgroundColor: "#F0EDE8" }}>
         <div className="max-w-5xl mx-auto px-6 py-20">
           <div className="max-w-2xl mx-auto text-center mb-12">
@@ -858,7 +843,7 @@ export default function HomeClient({ jobs, totalCount, companies }: Props) {
         </div>
       </section>
 
-      {/* ── JOB LISTINGS ──────────────────────────────────── */}
+      {/* -- JOB LISTINGS ------------------------------------ */}
       <section id="jobs" ref={jobsSectionRef} className="max-w-5xl mx-auto px-6 py-20">
         <div className="flex items-center justify-between mb-10">
           <h2 className="text-2xl font-semibold" style={{ color: "#1A1A1A" }}>
@@ -998,7 +983,7 @@ export default function HomeClient({ jobs, totalCount, companies }: Props) {
               ))}
             </div>
 
-            {/* ── PAGINATION CONTROLS ───────────────────────────── */}
+            {/* -- PAGINATION CONTROLS ----------------------------- */}
             {totalPages > 1 && (
               <div
                 className="mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
@@ -1097,7 +1082,7 @@ export default function HomeClient({ jobs, totalCount, companies }: Props) {
         )}
       </section>
 
-      {/* ── EMPLOYER CTA ──────────────────────────────────── */}
+      {/* -- EMPLOYER CTA ------------------------------------ */}
       <section className="max-w-5xl mx-auto px-6 py-4 pb-16">
         <div
           className="rounded-xl border px-6 py-12 sm:px-12 sm:py-14 text-center sm:text-left"
@@ -1156,7 +1141,7 @@ export default function HomeClient({ jobs, totalCount, companies }: Props) {
         </div>
       </section>
 
-      {/* ── EMAIL SIGNUP ──────────────────────────────────── */}
+      {/* -- EMAIL SIGNUP ------------------------------------ */}
       <section className="border-y" style={{ borderColor: "#E5E0D8" }}>
         <div className="max-w-5xl mx-auto px-6 py-20">
           <div className="max-w-lg mx-auto">
